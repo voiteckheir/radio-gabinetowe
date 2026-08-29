@@ -1,12 +1,9 @@
 <script lang="ts">
-
-import Seo from '$lib/Seo.svelte';
-
-import { onMount } from 'svelte';
-    import { slide } from 'svelte/transition'; // Służy do płynnego rozwijania opisu usług
+    import Seo from '$lib/Seo.svelte';
+    import { onMount } from 'svelte';
+    import { slide } from 'svelte/transition'; 
 
     // --- DANE: SLajdy ---
-    // Ścieżki do zdjęć (wrzuć je docelowo do folderu 'static')
     const zdjeciaStudia = [
         '/uslugi/Cover fb.webp',
         '/uslugi/C0020T01.webp',
@@ -17,7 +14,6 @@ import { onMount } from 'svelte';
     let aktualnySlajd = $state(0);
 
     onMount(() => {
-        // Automatyczne zmienianie slajdu co 4 sekundy
         const interval = setInterval(() => {
             aktualnySlajd = (aktualnySlajd + 1) % zdjeciaStudia.length;
         }, 4000);
@@ -60,18 +56,16 @@ import { onMount } from 'svelte';
         }
     ];
 
-    // Stan przechowujący ID rozwiniętej usługi
     let rozwinietaUsluga: string | null = $state(null);
 
     function toggleUsluga(id: string) {
         if (rozwinietaUsluga === id) {
-            rozwinietaUsluga = null; // Zwiń, jeśli kliknięto ponownie to samo
+            rozwinietaUsluga = null; 
         } else {
-            rozwinietaUsluga = id; // Rozwiń nowe
+            rozwinietaUsluga = id; 
         }
     }
 
-    // Możesz swobodnie edytować te dane - Svelte automatycznie wygeneruje z nich HTML
     const cennik_sala = [
         { id: 1, usluga_sala: "Opłata początkowa", cena_sala: "10 zł" },
         { id: 2, usluga_sala: "Sala prób", cena_sala: "30 zł/h" },
@@ -86,16 +80,15 @@ import { onMount } from 'svelte';
         { id: 11, usluga_sala: "Usługi nagraniowe, pozostawienie swojego sprzętu, rozliczenia miesięczne ze zniżką", cena_sala: "wycena indywidualna" }
     ];
 
-        const cennik_praca = [
+    const cennik_praca = [
         { id: 1, usluga_praca: "Godzina pracy studia z realizatorem (nagrania)", cena_praca: "80 zł" },
         { id: 2, usluga_praca: "Godzina pracy studia bez realizatora", cena_praca: "40 zł" },
         { id: 3, usluga_praca: "Miks (w zależności od ilości śladów/długości i skomplikowania utworu)", cena_praca: "od 150 zł" },
         { id: 4, usluga_praca: "Mastering", cena_praca: "od 100 zł" },
         { id: 5, usluga_praca: "Podcasty", cena_praca: "80 zł/h" },
         { id: 6, usluga_praca: "Rekonstrukcja/Zgrywanie z analogowych nośników", cena_praca: "od 100 zł" },
-        { id: 7, usluga_praca: "Realizacja dźwięków live", cena_praca: "od 200 zł" },
-        { id: 8, usluga_praca: "Nagrania terenowe", cena_praca: "80 zł/h + Koszt dojazdu" }
-      
+        { id: 7, usluga_praca: "Realizacja dźwięku live", cena_praca: "od 400 zł" },
+        { id: 8, usluga_praca: "Nagrania terenowe", cena_praca: "80 zł/h" }
     ];
 
     const wyposazenie = [
@@ -120,29 +113,24 @@ import { onMount } from 'svelte';
         { id: 19, nazwa: "Laptop z DAW (Reaper)" },
         { id: 20, nazwa: "" }
     ];
-
-    
 </script>
 
-<!-- Tytuł karty w przeglądarce -->
 <Seo 
     title="Studio | Radio Gabinetowe"
     description="Nasze studio! Umów się na próbę, nagraj swój pierwszy utwór i wiele więcej."
 /> 
 
-<!-- SEKCJA POWITALNA (Slajdy i zdjęcia) -->
 <section class="max-w-7xl mx-auto px-4 w-full mb-16">
     <h1 class="text-4xl md:text-5xl font-black mb-8 border-b-4 border-red-800 inline-block pb-2 uppercase tracking-wide">
         STUDIO RADIA GABINET
     </h1>
     
-    <!-- Kontener Karuzeli -->
-    <div class="relative w-full h-75 md:h-125 bg-zinc-900 rounded-lg overflow-hidden shadow-2xl border-2 border-zinc-800">
-        <!-- Dodano klucz (i) do pętli zdjeciaStudia -->
+    <div class="relative w-full h-75 md:h-125 bg-zinc-900 rounded-lg overflow-hidden shadow-2xl border-2 border-zinc-800" aria-label="Galeria zdjęć studia">
         {#each zdjeciaStudia as zdjecie, i (i)}
             <img 
                 src={zdjecie} 
-                alt="Wnętrze studia" 
+                alt="" 
+                aria-hidden="true"
                 class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
                 style="opacity: {aktualnySlajd === i ? 1 : 0};"
             />
@@ -162,7 +150,6 @@ import { onMount } from 'svelte';
     </h2>
 
     <div class="flex flex-col gap-12">
-        <!-- Dodano klucz do pętli kategorieUslug -->
         {#each kategorieUslug as kategoria (kategoria.tytul_kategorii)}
             
             <div class="flex flex-col gap-6">
@@ -171,26 +158,28 @@ import { onMount } from 'svelte';
                 </h3>
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Dodano klucz do pętli kategoria.uslugi -->
                     {#each kategoria.uslugi as usluga (usluga.id)}
                         <button 
                             onclick={() => toggleUsluga(usluga.id)}
+                            aria-expanded={rozwinietaUsluga === usluga.id ? 'true' : 'false'}
+                            aria-controls="panel-{usluga.id}"
                             class="relative w-full aspect-4/3 md:aspect-video overflow-hidden border-[6px] border-[#d31a38] group bg-zinc-800 cursor-pointer shadow-lg hover:shadow-2xl transition-shadow"
                         >
                             <img 
                                 src={usluga.img} 
-                                alt={usluga.tytul}
+                                alt=""
+                                aria-hidden="true"
                                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500"></div>
 
                             <div class="absolute inset-0 flex items-center justify-center z-10 px-4">
-                                <h4 
+                                <span 
                                     class="text-white font-black text-2xl md:text-3xl uppercase tracking-widest text-center"
                                     style="text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0px 4px 10px rgba(0,0,0,0.8);"
                                 >
                                     {usluga.tytul}
-                                </h4>
+                                </span>
                             </div>
                         </button>
                     {/each}
@@ -199,13 +188,13 @@ import { onMount } from 'svelte';
                 {#if kategoria.uslugi.find(u => u.id === rozwinietaUsluga)}
                     {@const aktywna = kategoria.uslugi.find(u => u.id === rozwinietaUsluga)}
                     
-                    <div transition:slide={{ duration: 300 }} class="w-full">
+                    <div id="panel-{aktywna?.id}" transition:slide={{ duration: 300 }} class="w-full">
                         <div class="bg-zinc-900 border-l-4 border-red-500 text-white p-6 md:p-8 shadow-inner mt-2">
                             
                             <div class="flex justify-between items-start mb-4">
                                 <h4 class="text-2xl font-bold text-red-500">{aktywna?.tytul}</h4>
-                                <button title="rozwiniecie-uslugi" onclick={() => rozwinietaUsluga = null} class="text-zinc-500 hover:text-white transition">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <button aria-label="Zamknij opis usługi" onclick={() => rozwinietaUsluga = null} class="text-zinc-500 hover:text-white transition">
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                             </div>
                             
@@ -214,10 +203,9 @@ import { onMount } from 'svelte';
                             </p>
                             
                             <ul class="space-y-2">
-                                <!-- Dodano klucz do pętli punktów na liście -->
                                 {#each aktywna?.lista || [] as punkt (punkt)}
                                     <li class="flex items-start gap-3 text-zinc-400">
-                                        <span class="text-red-500 font-bold text-xl leading-none">•</span>
+                                        <span class="text-red-500 font-bold text-xl leading-none" aria-hidden="true">•</span>
                                         <span>{punkt}</span>
                                     </li>
                                 {/each}
@@ -233,22 +221,22 @@ import { onMount } from 'svelte';
 </section>
 
 <!-- GŁÓWNA ZAWARTOŚĆ (Siatka 2-kolumnowa na komputerach) -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12 max-w-7xl mx-auto px-4 w-full">
     
     <!-- LEWA KOLUMNA -->
     <div class="space-y-10">
         
-        <!-- Wyposażenie -->
         <section class="bg-white p-8 shadow-sm rounded-lg border-t-4 border-zinc-900">
             <h3 class="text-2xl font-bold mb-4 text-gray-900">Wyposażenie</h3>
             <ul class="list-disc list-inside space-y-2 text-gray-700">
                 {#each wyposazenie as sprzet (sprzet.id)}
-                    <li>{sprzet.nazwa}</li>
+                    {#if sprzet.nazwa.trim() !== ""}
+                        <li>{sprzet.nazwa}</li>
+                    {/if}
                 {/each}
             </ul>
         </section>
 
-        <!-- Godziny i jak umówić próbę -->
         <section class="bg-red-800 text-white p-8 shadow-sm rounded-lg">
             <h3 class="text-2xl font-bold mb-4">Godziny i rezerwacje</h3>
             
@@ -262,26 +250,22 @@ import { onMount } from 'svelte';
                 <p class="text-sm text-white mb-6 leading-relaxed">
                     Sprawdź wolne terminy w grafiku obok, a następnie zadzwoń do nas lub napisz maila (korzystając z formularza w zakładce Kontakt), podając wybraną datę i godzinę.
                 </p>
-                <a href="/kontakt" class="inline-block bg-white text-red-800 font-bold py-3 px-6 rounded hover:bg-gray-100 transition shadow">
+                <a href="/kontakt" class="inline-block bg-white te xt-red-800 font-bold py-3 px-6 rounded hover:bg-gray-100 transition shadow">
                     Przejdź do kontaktu
                 </a>
             </div>
         </section>
-        <!-- Kalendarz Google -->
+
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
             <h3 class="text-2xl font-bold mb-6 text-gray-900">Grafik Studia</h3>
             
-            <!-- Kontener zablokowany proporcjonalnie dla responsywności -->
             <div class="relative w-full overflow-hidden rounded border border-gray-300 bg-gray-50" style="padding-top: 80%;">
-                
-                <!-- Tymczasowy polski kalendarz świąt - podmienisz atrybut `src` na swój -->
                 <iframe 
                     src="https://calendar.google.com/calendar/embed?src=pl.polish%23holiday%40group.v.calendar.google.com&ctz=Europe%2FWarsaw&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&showTz=0" 
                     class="absolute top-0 left-0 w-full h-full border-0" 
                     title="Kalendarz Studia"
                     loading="lazy"
                 ></iframe>
-                
             </div>
             <p class="text-xs text-gray-500 mt-4 text-center">Widok kalendarza odświeża się automatycznie.</p>
         </section>
@@ -290,33 +274,35 @@ import { onMount } from 'svelte';
     <!-- PRAWA KOLUMNA -->
     <div class="space-y-10">
         
-        <!-- Cennik sali prób -->
+<!-- Cennik sali prób -->
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
             <h3 class="text-2xl font-bold mb-6 border-b-2 border-red-800 inline-block pb-1 text-gray-700">Cennik sali prób</h3>
             <ul class="space-y-4">
                 {#each cennik_sala as pozycja (pozycja.id)}
-                    <li class="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <!-- Dodano gap-4 -->
+                    <li class="flex justify-between items-center gap-4 border-b border-gray-100 pb-3">
                         <span class="text-gray-700 font-medium">{pozycja.usluga_sala}</span>
-                        <span class="font-bold text-red-800 text-lg">{pozycja.cena_sala}</span>
+                        <!-- Dodano whitespace-nowrap oraz shrink-0 -->
+                        <span class="font-bold text-red-800 text-lg whitespace-nowrap shrink-0">{pozycja.cena_sala}</span>
                     </li>
                 {/each}
             </ul>
         </section>
 
-                <!-- Cennik pracy studia -->
+        <!-- Cennik pracy studia -->
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
-            <h3 class="text-2xl font-bold mb-6 border-b-2 border-red-800 inline-block pb-1 text-gray-700">Cennik sali prób</h3>
+            <h3 class="text-2xl font-bold mb-6 border-b-2 border-red-800 inline-block pb-1 text-gray-700">Cennik pracy studia</h3>
             <ul class="space-y-4">
                 {#each cennik_praca as pozycja (pozycja.id)}
-                    <li class="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <!-- Dodano gap-4 -->
+                    <li class="flex justify-between items-center gap-4 border-b border-gray-100 pb-3">
                         <span class="text-gray-700 font-medium">{pozycja.usluga_praca}</span>
-                        <span class="font-bold text-red-800 text-lg">{pozycja.cena_praca}</span>
+                        <!-- Dodano whitespace-nowrap oraz shrink-0 -->
+                        <span class="font-bold text-red-800 text-lg whitespace-nowrap shrink-0">{pozycja.cena_praca}</span>
                     </li>
                 {/each}
             </ul>
         </section>
 
-        
-        
     </div>
 </div>
