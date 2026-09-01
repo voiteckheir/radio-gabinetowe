@@ -1,5 +1,6 @@
 <script lang="ts">
     import Seo from "$lib/Seo.svelte";
+    import { dniTygodnia, wszystkieAudycje } from "$lib/data.js";
 
     type Audycja = {
         id: number;
@@ -10,7 +11,7 @@
         opis: string;
         linkPodcast: string | null;
     };
-
+/*
     const dniTygodnia = [
         { id: 1, data: '07.08', dzien: 'PT.', aktywne: false },
         { id: 2, data: '08.08', dzien: 'SB.', aktywne: false },
@@ -20,7 +21,7 @@
         { id: 6, data: '12.08', dzien: 'ŚR.', aktywne: false },
         { id: 7, data: '13.08', dzien: 'CZ.', aktywne: false }
     ];
-
+*/
     const audycje: Audycja[] = [
         { 
             id: 1, 
@@ -80,6 +81,11 @@
             zamknijModal();
         }
     }
+    // Domyślnie ustawiamy dzień nr 4 ("Dzisiaj")
+    let aktywnyDzienId = $state(4); 
+    
+    // $derived: za każdym razem gdy zmieni się aktywnyDzienId, Svelte przefiltruje audycje
+    let widoczneAudycje = $derived(wszystkieAudycje.filter(a => a.dzienId === aktywnyDzienId));
 </script>
 
 <Seo 
@@ -95,24 +101,25 @@
         </h1>
 
         <!-- Nawigacja dni tygodnia -->
-        <nav aria-label="Nawigacja po dniach tygodnia" class="flex overflow-x-auto gap-4 md:justify-center border-b border-zinc-800 pb-4 mb-10 no-scrollbar">
-            {#each dniTygodnia as dzien (dzien.id)}
-                <button 
-                    aria-current={dzien.aktywne ? 'page' : undefined}
-                    class="flex flex-col items-center justify-center min-w-[80px] group transition"
-                >
-                    <span class="text-lg md:text-xl font-bold {dzien.aktywne ? 'text-white' : 'text-zinc-400 group-hover:text-red-400'} transition">
-                        {dzien.data}
-                    </span>
-                    <span class="text-xs font-black tracking-widest mt-1 {dzien.aktywne ? 'bg-[#d31a38] text-white px-2 py-0.5' : 'text-zinc-600'} transition">
-                        {dzien.dzien}
-                    </span>
-                </button>
-            {/each}
-        </nav>
-
-        <div class="flex flex-col gap-4">
-            {#each audycje as audycja (audycja.id)}
+        <!-- W nawigacji po dniach modyfikujemy przyciski: -->
+    <nav aria-label="Nawigacja po dniach tygodnia" class="flex overflow-x-auto gap-4 md:justify-center border-b border-zinc-800 pb-4 mb-10 no-scrollbar">
+        {#each dniTygodnia as dzien (dzien.id)}
+            <button 
+                onclick={() => aktywnyDzienId = dzien.id}
+                aria-current={aktywnyDzienId === dzien.id ? 'page' : undefined}
+                class="flex flex-col items-center justify-center min-w-[80px] group transition"
+            >
+                <span class="text-lg md:text-xl font-bold {aktywnyDzienId === dzien.id ? 'text-white' : 'text-zinc-400 group-hover:text-red-400'} transition">
+                    {dzien.data}
+                </span>
+                <span class="text-xs font-black tracking-widest mt-1 {aktywnyDzienId === dzien.id ? 'bg-[#d31a38] text-white px-2 py-0.5' : 'text-zinc-600'} transition">
+                    {dzien.dzien}
+                </span>
+            </button>
+        {/each}
+    </nav>
+    <div class="flex flex-col gap-4">
+        {#each widoczneAudycje as audycja (audycja.id)}
                 <button 
                     aria-label="Otwórz szczegóły audycji: {audycja.tytul} o {audycja.czas}"
                     onclick={() => otworzModal(audycja)}

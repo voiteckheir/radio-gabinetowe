@@ -160,9 +160,9 @@
                 </div>
                 <h3 class="font-bold text-xl mb-3 leading-tight uppercase text-gray-900">{wpis.tytul}</h3>
                 <p class="text-sm text-gray-600 grow mb-4 line-clamp-3">{wpis.opis}</p>
-                <button aria-label="Czytaj dalej artykuł: {wpis.tytul}" class="self-start text-xs font-bold text-red-800 uppercase hover:text-red-600 transition">
-                    Czytaj dalej ➔
-                </button>
+                    <a href="/aktualnosci/{wpis.slug}" aria-label="Czytaj dalej artykuł: {wpis.tytul}" class="self-start text-xs font-bold text-red-800 uppercase hover:text-red-600 transition">
+                        Czytaj dalej ➔
+                    </a>
             </article>
         {/each}
     </div>

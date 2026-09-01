@@ -1,18 +1,24 @@
 export const aktualnosci = [
 	{
 		id: 1,
+		slug: 'trzeci-krok-do-slawy', // <-- To będzie w pasku adresu URL
 		tytul: 'TRZECI KROK DO SŁAWY',
-		opis: 'Tworzysz muzykę i marzysz by nagrać swoje numery w profesjonalnym studiu? A może działasz w młodzieżowym zespole...'
+		opis: 'Tworzysz muzykę i marzysz by nagrać...', // Skrót na stronę główną
+		pelnaTresc: 'Pełny artykuł o tym jak stworzyć muzykę, długi tekst, akapity itp...'
 	},
 	{
 		id: 2,
+		slug: 'literacki-wechikul-czasu',
 		tytul: 'LITERACKI WEHIKUŁ CZASU',
-		opis: 'Już od dziś o 18:00 na antenie naszego radia rusza cykl Literacki wehikuł czasu – seria opowieści o znakomitych poetach...'
+		opis: 'Już od dziś o 18:00 na antenie naszego radia rusza cykl Literacki wehikuł czasu – seria opowieści o znakomitych poetach...',
+		pelnaTresc: 'Pełny opis o audycji literacki wechikuł czasu'
 	},
 	{
 		id: 3,
+		slug: 'premiera-bullet-haze',
 		tytul: 'PREMIERA BULLET HAZE',
-		opis: 'Już od dziś możecie słuchać pierwszego utworu nagranego w ramach Drugiego kroku do sławy. Przed Wami Bullet Haze...'
+		opis: 'Już od dziś możecie słuchać pierwszego utworu nagranego w ramach Drugiego kroku do sławy. Przed Wami Bullet Haze...',
+		pelnaTresc: 'Pełny opis o premierze utworu Bullet Haze'
 	}
 ];
 
@@ -73,4 +79,60 @@ export const bazaArtystow = [
 	{ id: 4, nazwa: 'WØJTEK', zdjecie: 'FOTO', slug: 'wojtek', gatunek: 'Hip-Hop' },
 	{ id: 5, nazwa: 'WHOSMYK', zdjecie: 'FOTO', slug: 'whosmyk', gatunek: 'Indie' },
 	{ id: 6, nazwa: 'MARCIN POLAK', zdjecie: 'FOTO', slug: 'marcin-polak', gatunek: 'Muzyka filmowa' }
+];
+
+export const dniTygodnia = [
+	{ id: 1, data: '07.08', dzien: 'PT.' },
+	{ id: 2, data: '08.08', dzien: 'SB.' },
+	{ id: 3, data: 'Wczoraj', dzien: 'ND.' },
+	{ id: 4, data: 'Dzisiaj', dzien: 'PN.' }, // Załóżmy, że to domyślny dzień
+	{ id: 5, data: 'Jutro', dzien: 'WT.' },
+	{ id: 6, data: '12.08', dzien: 'ŚR.' },
+	{ id: 7, data: '13.08', dzien: 'CZ.' }
+];
+
+export const wszystkieAudycje = [
+	// Audycje dla "Dzisiaj" (dzienId: 4)
+	{
+		id: 1,
+		dzienId: 4,
+		czas: '06:00',
+		tytul: 'Poranne Witaminy',
+		prowadzacy: 'Blok Muzyczny',
+		obrazek: 'FOTO',
+		opis: 'Najlepsza muzyka na przebudzenie...',
+		linkPodcast: null
+	},
+	{
+		id: 2,
+		dzienId: 4,
+		czas: '10:00',
+		tytul: 'Kawał Ciężkiego Metalu',
+		prowadzacy: 'Redakcja',
+		obrazek: 'FOTO',
+		opis: 'Dwie godziny bezkompromisowych brzmień...',
+		linkPodcast: 'https://youtube.com'
+	},
+	// Audycja dla "Jutro" (dzienId: 5)
+	{
+		id: 3,
+		dzienId: 5,
+		czas: '13:00',
+		tytul: 'Reklasycznie',
+		prowadzacy: 'Blok Muzyczny',
+		obrazek: 'FOTO',
+		opis: 'Zupełnie nowe spojrzenie na klasykę...',
+		linkPodcast: null
+	},
+	// Audycja dla "Wczoraj" (dzienId: 3)
+	{
+		id: 4,
+		dzienId: 3,
+		czas: '18:00',
+		tytul: 'Wkraczając w film',
+		prowadzacy: 'Marcin Polak',
+		obrazek: 'FOTO',
+		opis: 'Analiza muzyki i motywów dźwiękowych...',
+		linkPodcast: 'https://youtube.com'
+	}
 ];
