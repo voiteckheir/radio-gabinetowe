@@ -133,11 +133,16 @@
                 </li>
             </ul>
             
-            <!-- Placeholder na osadzenie Google Maps -->
-            <div class="mt-10 h-56 bg-zinc-900 rounded border border-zinc-800 flex items-center justify-center p-4 text-center">
-                <span class="text-gray-500 text-sm">
-                    Tutaj wkleisz kod <b>iframe</b> z Google Maps (Podobnie jak przy kalendarzu)
-                </span>
+<!-- Interaktywna Mapa Google -->
+            <div class="mt-10 h-64 md:h-80 w-full rounded border border-zinc-800 overflow-hidden relative grayscale contrast-125 opacity-80 hover:opacity-100 hover:grayscale-0 transition-all duration-500 shadow-inner">
+                <iframe 
+                    src="https://maps.google.com/maps?q=Dolna+Panny+Marii+63,+20-010+Lublin&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+                    class="absolute top-0 left-0 w-full h-full border-0" 
+                    allowfullscreen={true} 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade"
+                    title="Mapa dojazdu - Radio Gabinetowe"
+                ></iframe>
             </div>
         </div>
         

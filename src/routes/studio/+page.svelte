@@ -2,8 +2,13 @@
     import Seo from '$lib/Seo.svelte';
     import { onMount } from 'svelte';
     import { slide } from 'svelte/transition'; 
+    import { client } from '$lib/sanity';
 
-    // --- DANE: SLajdy ---
+    let { data }: any = $props(); 
+    // Pancerne zabezpieczenie: jeśli Sanity jeszcze nie zwróciło danych, tworzymy puste tablice
+    let ustawienia = $derived(data?.studioData || { wyposazenie: [], cennikSala: [], cennikPraca: [] });
+
+    // --- DANE: Slajdy ---
     const zdjeciaStudia = [
         '/uslugi/Cover fb.webp',
         '/uslugi/C0020T01.webp',
@@ -65,7 +70,7 @@
             rozwinietaUsluga = id; 
         }
     }
-
+/*
     const cennik_sala = [
         { id: 1, usluga_sala: "Opłata początkowa", cena_sala: "10 zł" },
         { id: 2, usluga_sala: "Sala prób", cena_sala: "30 zł/h" },
@@ -113,6 +118,22 @@
         { id: 19, nazwa: "Laptop z DAW (Reaper)" },
         { id: 20, nazwa: "" }
     ];
+*/
+    export async function load() {
+    // [0] na końcu oznacza, że bierzemy tylko PIERWSZY (i jedyny) dokument ustawień
+    const query = `*[_type == "ustawieniaStudia"][0] {
+        wyposazenie,
+        cennikSala,
+        cennikPraca
+    }`;
+    
+    const studioData = await client.fetch(query);
+
+    return {
+        // Zabezpieczamy się na wypadek, gdybyś zapomniał opublikować dokument w Sanity
+        studioData: studioData || { wyposazenie: [], cennikSala: [], cennikPraca: [] }
+    };
+}
 </script>
 
 <Seo 
@@ -229,12 +250,12 @@
         <section class="bg-white p-8 shadow-sm rounded-lg border-t-4 border-zinc-900">
             <h3 class="text-2xl font-bold mb-4 text-gray-900">Wyposażenie</h3>
             <ul class="list-disc list-inside space-y-2 text-gray-700">
-                {#each wyposazenie as sprzet (sprzet.id)}
-                    {#if sprzet.nazwa.trim() !== ""}
-                        <li>{sprzet.nazwa}</li>
-                    {/if}
-                {/each}
-            </ul>
+        {#each ustawienia?.wyposazenie || [] as sprzet, i (i)}
+            {#if sprzet.trim() !== ""}
+                <li>{sprzet}</li>
+            {/if}
+        {/each}
+    </ul>
         </section>
 
         <section class="bg-red-800 text-white p-8 shadow-sm rounded-lg">
@@ -274,34 +295,31 @@
     <!-- PRAWA KOLUMNA -->
     <div class="space-y-10">
         
-<!-- Cennik sali prób -->
+
+        <!-- Cennik sali prób -->
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
             <h3 class="text-2xl font-bold mb-6 border-b-2 border-red-800 inline-block pb-1 text-gray-700">Cennik sali prób</h3>
             <ul class="space-y-4">
-                {#each cennik_sala as pozycja (pozycja.id)}
-                    <!-- Dodano gap-4 -->
-                    <li class="flex justify-between items-center gap-4 border-b border-gray-100 pb-3">
-                        <span class="text-gray-700 font-medium">{pozycja.usluga_sala}</span>
-                        <!-- Dodano whitespace-nowrap oraz shrink-0 -->
-                        <span class="font-bold text-red-800 text-lg whitespace-nowrap shrink-0">{pozycja.cena_sala}</span>
-                    </li>
-                {/each}
-            </ul>
+        {#each ustawienia?.cennikSala || [] as pozycja, i (i)}
+            <li class="flex justify-between items-center gap-4 border-b border-gray-100 pb-3">
+                <span class="text-gray-700 font-medium">{pozycja.usluga}</span>
+                <span class="font-bold text-red-800 text-lg whitespace-nowrap shrink-0">{pozycja.cena}</span>
+            </li>
+        {/each}
+    </ul>
         </section>
 
         <!-- Cennik pracy studia -->
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
             <h3 class="text-2xl font-bold mb-6 border-b-2 border-red-800 inline-block pb-1 text-gray-700">Cennik pracy studia</h3>
             <ul class="space-y-4">
-                {#each cennik_praca as pozycja (pozycja.id)}
-                    <!-- Dodano gap-4 -->
-                    <li class="flex justify-between items-center gap-4 border-b border-gray-100 pb-3">
-                        <span class="text-gray-700 font-medium">{pozycja.usluga_praca}</span>
-                        <!-- Dodano whitespace-nowrap oraz shrink-0 -->
-                        <span class="font-bold text-red-800 text-lg whitespace-nowrap shrink-0">{pozycja.cena_praca}</span>
-                    </li>
-                {/each}
-            </ul>
+        {#each ustawienia?.cennikPraca || [] as pozycja, i (i)}
+            <li class="flex justify-between items-center gap-4 border-b border-gray-100 pb-3">
+                <span class="text-gray-700 font-medium">{pozycja.usluga}</span>
+                <span class="font-bold text-red-800 text-lg whitespace-nowrap shrink-0">{pozycja.cena}</span>
+            </li>
+        {/each}
+    </ul>
         </section>
 
     </div>

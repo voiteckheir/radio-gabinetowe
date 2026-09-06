@@ -30,7 +30,13 @@
         }
     });
 
-    let partnerzy = $state(data.partner || []);
+    let partnerzy = $state<any[]>([]);
+
+$effect(() => {
+    if (data.partner && partnerzy.length === 0) {
+        partnerzy = data.partner;
+    }
+});
 
     let autoPlayPartnerzy: ReturnType<typeof setInterval>;
     let pauseTimeoutPartnerzy: ReturnType<typeof setTimeout>;
