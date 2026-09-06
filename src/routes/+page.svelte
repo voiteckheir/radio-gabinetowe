@@ -3,7 +3,20 @@
     import { player } from '$lib/player.svelte.js';
     import { flip } from 'svelte/animate';
     import { onMount, onDestroy } from 'svelte';
-    import { aktualnosci, podcasty, bazaPartnerow, bazaArtystow } from '$lib/data.js';
+    import { bazaPartnerow, bazaArtystow } from '$lib/data.js';
+
+    // Odbieramy dane pobrane z Sanity przez plik +page.ts
+    let { data } = $props();
+
+    // Definiujemy naszą funkcję odpalania podcastu (teraz używamy audioUrl z Sanity)
+    function odpalPodcast(pod: any) {
+        player.isLive = false;
+        player.streamUrl = pod.audioUrl;
+        player.currentTitle = pod.tytul;
+        player.currentSubtitle = pod.autor || 'Gab In Net';
+        player.currentImage = pod.imageUrl || null; // Pobiera okładkę z Sanity!
+        player.isPlaying = true;
+    }
 
     type Podcast = {
         id: number;
@@ -15,13 +28,7 @@
         youtubeUrl: string;
     };
 
-    function odpalPodcast(pod: Podcast) {
-        player.isLive = false;
-        player.streamUrl = pod.audioUrl;
-        player.currentTitle = pod.tytul;
-        player.currentSubtitle = pod.autor;
-        player.isPlaying = true;
-    }
+
 
     let partnerzy = $state(bazaPartnerow);
     const artystaMiesiaca = bazaArtystow[0];
@@ -153,16 +160,24 @@
 <section class="max-w-7xl mx-auto px-4 w-full mb-20">
     <h2 class="text-3xl font-black mb-8 border-b-4 border-red-800 inline-block pb-2">AKTUALNOŚCI</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {#each aktualnosci as wpis (wpis.id)}
+        {#each data.posts as wpis (wpis._id)}
             <article class="bg-white p-6 shadow-sm rounded border-t-4 border-red-800 flex flex-col hover:shadow-md transition duration-300">
-                <div class="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center text-gray-400">
-                    <span aria-hidden="true">Zdjęcie z Sanity</span>
+
+                <!-- ZMIANA: Kontener na zdjęcie z warunkiem wyświetlania -->
+                <div class="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center text-gray-400 overflow-hidden relative">
+                    {#if wpis.imageUrl}
+                        <img src={wpis.imageUrl} alt={wpis.tytul} class="absolute inset-0 w-full h-full object-cover"/>
+                    {:else}
+                        <span aria-hidden="true">Brak zdjęcia</span>
+                    {/if}
                 </div>
+
                 <h3 class="font-bold text-xl mb-3 leading-tight uppercase text-gray-900">{wpis.tytul}</h3>
-                <p class="text-sm text-gray-600 grow mb-4 line-clamp-3">{wpis.opis}</p>
-                    <a href="/aktualnosci/{wpis.slug}" aria-label="Czytaj dalej artykuł: {wpis.tytul}" class="self-start text-xs font-bold text-red-800 uppercase hover:text-red-600 transition">
-                        Czytaj dalej ➔
-                    </a>
+                <p class="text-sm text-gray-600 grow mb-4 line-clamp-3">{wpis.zajawka}</p>
+
+                <a href="/aktualnosci/{wpis.slug}" aria-label="Czytaj dalej artykuł: {wpis.tytul}" class="self-start text-xs font-bold text-red-800 uppercase hover:text-red-600 transition">
+                    Czytaj dalej ➔
+                </a>
             </article>
         {/each}
     </div>
@@ -176,16 +191,23 @@
     </div>
     
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {#each podcasty as pod (pod.id)}
-            <article class="bg-red-800 text-white rounded-lg p-4 flex flex-col hover:-translate-y-1 transition duration-300 shadow-md">
-                <div class="relative w-full aspect-square bg-red-950 rounded mb-4 overflow-hidden group">
-                    <div class="absolute inset-0 flex items-center justify-center text-red-900 font-bold opacity-30 text-4xl" aria-hidden="true">FOTO</div>
-                    <button aria-label="Uruchom podcast: {pod.tytul}"
-                        onclick={() => odpalPodcast(pod)}
-                        class="absolute bottom-3 left-3 bg-white text-red-800 w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 shadow-lg transition"
-                    >
-                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 ml-1"><path d="M8 5v14l11-7z"/></svg>
-                    </button>
+        {#each data.podcasts as pod (pod._id)}
+    <article class="bg-red-800 text-white rounded-lg p-4 flex flex-col hover:-translate-y-1 transition duration-300 shadow-md">
+        
+        <div class="relative w-full aspect-square bg-red-950 rounded mb-4 overflow-hidden group">
+            <div class="absolute inset-0 flex items-center justify-center text-red-900 font-bold opacity-30 text-4xl" aria-hidden="true">FOTO</div>
+            
+            <!-- ZMIANA: Zdjęcie renderuje się tylko, gdy faktycznie wrzuciłeś je do Sanity -->
+            {#if pod.imageUrl}
+                <img src={pod.imageUrl} alt="Okładka odcinka" class="absolute inset-0 w-full h-full object-cover" />
+            {/if}
+            
+            <button aria-label="Uruchom podcast: {pod.tytul}"
+                onclick={() => odpalPodcast(pod)}
+                class="absolute bottom-3 left-3 z-10 bg-white text-red-800 w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 shadow-lg transition"
+            >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 ml-1"><path d="M8 5v14l11-7z"/></svg>
+            </button>
                 </div>
                 <div class="grow flex flex-col">
                     <h3 class="font-bold text-lg leading-tight mb-1">{pod.tytul}</h3>

@@ -1,44 +1,40 @@
 <script lang="ts">
-    import { page } from '$app/stores';
     import Seo from '$lib/Seo.svelte';
-    import { aktualnosci } from '$lib/data.js';
-
-    // SvelteKit wyciąga "slug" z adresu URL
-    let postSlug = $page.params.slug;
     
-    // Szukamy odpowiedniego posta w naszym data.js
-    let post = $derived(aktualnosci.find(p => p.slug === postSlug));
+    // Odbieramy artykuł z +page.ts
+    let { data } = $props();
+    
+    // POPRAWKA 1: Używamy $derived, aby zachować reaktywność w Svelte 5!
+    let post = $derived(data.post);
 </script>
 
-{#if post}
-    <Seo 
-        title="{post.tytul} | Radio Gabinetowe"
-        description={post.opis}
-    />
+<Seo title="{post.tytul} | Radio Gabinetowe" />
 
-    <article class="max-w-4xl mx-auto px-4 py-16 text-white min-h-[70vh]">
-        <a href="/" class="text-red-500 font-bold uppercase tracking-widest text-xs hover:text-white transition flex items-center gap-2 mb-8">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-            Wróć do aktualności
-        </a>
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <!-- POPRAWKA 4: Uciszamy ESLinta dla zwykłego linku powrotnego -->
+    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+    <a href="/" class="text-red-500 hover:text-red-400 font-bold uppercase text-xs mb-8 inline-block">
+        ← Wróć do aktualności
+    </a>
 
-        <div class="w-full aspect-video bg-zinc-900 border-2 border-zinc-800 mb-8 flex items-center justify-center">
-            <span class="text-zinc-600 font-bold tracking-widest">Duże Zdjęcie z Sanity</span>
-        </div>
+    {#if post.imageUrl}
+        <img src={post.imageUrl} alt={post.tytul} class="w-full h-64 md:h-96 object-cover rounded-lg mb-8" />
+    {/if}
 
-        <h1 class="text-4xl md:text-5xl font-black mb-6 uppercase text-gray-100 leading-tight">
-            {post.tytul}
-        </h1>
-
-        <!-- Klasa 'prose' z Tailwind Typography pięknie formatuje długie artykuły -->
-        <div class="text-zinc-300 text-lg leading-relaxed space-y-6">
-            <p>{post.pelnaTresc}</p>
-        </div>
-    </article>
-{:else}
-    <!-- Gdy postu o danym slugu nie ma w bazie -->
-    <div class="min-h-[70vh] flex flex-col items-center justify-center text-white">
-        <h1 class="text-4xl font-black mb-4">Artykuł nie istnieje</h1>
-        <a href="/" class="text-red-500 hover:underline">Wróć na stronę główną</a>
+    <h1 class="text-3xl md:text-5xl font-black text-white mb-6 uppercase leading-tight">
+        {post.tytul}
+    </h1>
+    
+    <!-- Sanity wysyła treść jako tablicę bloków (Rich Text). -->
+    <div class="text-gray-300 text-lg leading-relaxed space-y-4">
+        {#if post.tresc}
+            <!-- POPRAWKA 2: Dodajemy klucz (i) do pętli each -->
+            {#each post.tresc as blok, i (i)}
+                {#if blok._type === 'block' && blok.children}
+                    <!-- POPRAWKA 3: Dodajemy typ (child: any) do parametru map -->
+                    <p>{blok.children.map((child: any) => child.text).join('')}</p>
+                {/if}
+            {/each}
+        {/if}
     </div>
-{/if}
+</div>

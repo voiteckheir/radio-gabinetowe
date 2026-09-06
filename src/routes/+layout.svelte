@@ -1,16 +1,22 @@
 <script lang="ts">
     import { player } from '$lib/player.svelte.js';
     import { page } from '$app/stores';
+    import { onMount, onDestroy, untrack } from 'svelte'; // <-- DODANO untrack
     import '../app.css'; 
-
+    import { PUBLIC_RADIO_HOST, PUBLIC_STATION_SLUG } from '$env/static/public';
     import CookieBanner from '$lib/CookieBanner.svelte';
 
     let { children } = $props(); 
     
     let audioElement: HTMLAudioElement;
-
-    // Zmienna przechowująca głośność przed wyciszeniem
     let previousVolume = 0.5;
+    
+    // --- NOWE ZMIENNE DO PASKA POSTĘPU ---
+    let currentTime = $state(0);
+    let duration = $state(0);
+
+    const RADIO_API_URL = `${PUBLIC_RADIO_HOST}/api/nowplaying/${PUBLIC_STATION_SLUG}`;
+    let nowPlayingInterval: ReturnType<typeof setInterval>;
 
     $effect(() => {
         if (audioElement) {
@@ -18,18 +24,22 @@
         }
     });
 
-    // Reagowanie na zmianę źródła dźwięku (streamUrl)
-    // Kiedy zmieniamy radio na podcast, musimy wymusić play()
+    // NAPRAWIONY $effect - resetuje plik TYLKO gdy zmieni się adres (streamUrl)
     $effect(() => {
-        let url = player.streamUrl;
-        if (audioElement && player.isPlaying) {
-            // Używamy setTimeout by dać Svelte ułamek sekundy na podmianę atrybutu src w HTML
-            setTimeout(() => {
-                audioElement.play().catch(e => console.error("Błąd odtwarzania:", e));
-            }, 50);
+        let url = player.streamUrl; // Reakcja tylko na nowy odcinek podcastu
+        
+        if (audioElement) {
+            untrack(() => { // Ignorujemy zmianę player.isPlaying
+                if (player.isPlaying) {
+                    audioElement.load(); 
+                    setTimeout(() => {
+                        audioElement.play().catch(e => console.error("Błąd odtwarzania:", e));
+                    }, 50);
+                }
+            });
         }
     });
-
+    
     function togglePlay() {
         if (player.isPlaying) {
             audioElement.pause();
@@ -41,35 +51,62 @@
             player.isPlaying = true;
         }
     }
-    // Funkcja wyciszająca / odciszająca
+
     function toggleMute() {
         if (player.volume > 0) {
-            previousVolume = player.volume; // Zapisujemy obecną głośność
-            player.volume = 0;              // Wyciszamy do 0
+            previousVolume = player.volume;
+            player.volume = 0;
         } else {
-            // Wracamy do poprzedniej, chyba że wynosiła 0 - wtedy dajemy domyślne 50%
             player.volume = previousVolume > 0 ? previousVolume : 0.5; 
         }
     }
 
-    // Funkcja powrotu do radia na żywo
+    // --- NOWA FUNKCJA FORMATUJĄCA CZAS (np. 65 sekund -> 01:05) ---
+    function formatTime(seconds: number) {
+        if (isNaN(seconds) || seconds < 0) return "00:00";
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    async function fetchNowPlaying() {
+        if (!player.isLive) return;
+        try {
+            const response = await fetch(RADIO_API_URL);
+            const data = await response.json();
+            player.currentTitle = data.now_playing.song.title;
+            player.currentSubtitle = data.now_playing.song.artist;
+            player.currentImage = data.now_playing.song.art;
+        } catch (error) {
+            console.error("Błąd pobierania danych z AzuraCast:", error);
+        }
+    }
+
+    onMount(() => {
+        fetchNowPlaying(); 
+        nowPlayingInterval = setInterval(fetchNowPlaying, 15000); 
+    });
+
+    onDestroy(() => {
+        clearInterval(nowPlayingInterval);
+    });
+
     function backToLive() {
         player.isLive = true;
         player.streamUrl = player.liveStreamUrl;
-        // Resetujemy metadane do domyślnych (później będzie to robić API)
-        player.currentTitle = 'Klucz do autostrady';
-        player.currentSubtitle = 'TOMASZ HATYLAK';
-        player.currentImage = null;
+        player.currentTitle = 'Łączenie z radiem...';
+        player.currentSubtitle = 'Gab In Net';
+        fetchNowPlaying(); 
         player.isPlaying = true;
     }
 </script>
 
-<audio bind:this={audioElement} src={player.streamUrl} preload="none"></audio>
+<audio bind:this={audioElement} src={player.streamUrl} bind:currentTime bind:duration preload="none"></audio>
 
 <div class="min-h-screen flex flex-col bg-black font-sans text-gray-100">
     
     <!-- SKIP LINK (Dostępność dla nawigacji klawiaturą) -->
-    <a href="#glowna-tresc" class="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-[9999] bg-[#d31a38] text-white px-6 py-3 font-bold shadow-2xl">
+    <a href="#glowna-tresc" class="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-9999 bg-[#d31a38] text-white px-6 py-3 font-bold shadow-2xl">
         Przejdź do głównej treści
     </a>
 
@@ -110,19 +147,40 @@
                         </div>
                     {/if}
                     
-                    <div class="flex flex-col justify-center min-w-0">
-                        <div class="flex items-center gap-2 mb-0.5">
-                            {#if player.isLive}
-                                <span class="bg-zinc-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">TERAZ</span>
-                            {:else}
-                                <span class="bg-white text-red-900 text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">PODCAST</span>
-                            {/if}
-                            <span class="text-xs uppercase tracking-wider font-semibold text-red-100 truncate">{player.currentSubtitle}</span>
-                        </div>
-                        <h3 class="font-bold text-xl md:text-2xl leading-none truncate w-full max-w-50 md:max-w-md">
-                            {player.currentTitle}
-                        </h3>
-                    </div>
+                    <div class="flex flex-col justify-center min-w-0 grow">
+    <div class="flex items-center gap-2 mb-0.5">
+        {#if player.isLive}
+            <span class="bg-zinc-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">TERAZ</span>
+        {:else}
+            <span class="bg-white text-red-900 text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">PODCAST</span>
+        {/if}
+        <span class="text-xs uppercase tracking-wider font-semibold text-red-100 truncate">{player.currentSubtitle}</span>
+    </div>
+    <h3 class="font-bold text-xl md:text-2xl leading-none truncate w-full max-w-50 md:max-w-md">
+        {player.currentTitle}
+    </h3>
+    
+    <!-- NOWOŚĆ: PASEK POSTĘPU (WIDOCZNY TYLKO DLA PODCASTÓW) -->
+    {#if !player.isLive}
+        <div class="flex items-center gap-2 mt-2 w-full max-w-md">
+            <!-- Obecny czas -->
+            <span class="text-[10px] font-mono text-red-200 w-10 text-right">{formatTime(currentTime)}</span>
+            
+            <!-- Suwak (Range) -->
+            <input 
+                type="range" 
+                min="0" 
+                max={duration || 0} 
+                bind:value={currentTime} 
+                class="grow h-2 bg-red-950 rounded-lg appearance-none cursor-pointer accent-white" 
+                aria-label="Pasek postępu" 
+            />
+            
+            <!-- Czas całkowity -->
+            <span class="text-[10px] font-mono text-red-200 w-10">{formatTime(duration)}</span>
+        </div>
+    {/if}
+</div>
                 </div>
 
                 <div class="flex items-center gap-4 justify-end w-full md:w-auto text-sm font-medium">
@@ -150,7 +208,7 @@
         </div>
 
         <!-- MENU GŁÓWNE -->
-        <header class="absolute top-full left-0 w-full z-10 bg-gradient-to-b from-black/90 via-black/50 to-transparent pb-8">
+        <header class="absolute top-full left-0 w-full z-10 bg-linear-to-b from-black/90 via-black/50 to-transparent pb-8">
             <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-6">
                 
                 <a href="/" class="block transition hover:opacity-80" aria-label="Strona Główna">

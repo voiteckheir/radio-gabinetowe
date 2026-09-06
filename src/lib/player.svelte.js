@@ -1,4 +1,9 @@
 // src/lib/player.svelte.js
+
+import { PUBLIC_RADIO_HOST, PUBLIC_STATION_SLUG } from '$env/static/public';
+
+const defaultStream = `${PUBLIC_RADIO_HOST}/listen/${PUBLIC_STATION_SLUG}/radio.mp3`;
+
 export const player = $state({
 	isPlaying: false,
 	volume: 0.5,
@@ -7,13 +12,13 @@ export const player = $state({
 	isLive: true,
 
 	// Domyślny strumień radia (do niego będziemy wracać)
-	liveStreamUrl: 'https://twoj-serwer.pl/listen/radio/radio.mp3',
+	liveStreamUrl: defaultStream,
 
 	// Aktualnie odtwarzany plik (zmienia się po kliknięciu w podcast)
-	streamUrl: 'https://twoj-serwer.pl/listen/radio/radio.mp3',
+	streamUrl: defaultStream,
 
 	// Metadane do wyświetlenia w odtwarzaczu
-	currentTitle: 'Klucz do autostrady',
-	currentSubtitle: 'TOMASZ HATYLAK',
+	currentTitle: 'Łączenie z serwerem...',
+	currentSubtitle: 'Gab In Net',
 	currentImage: null // <-- NOWA ZMIENNA (null oznacza brak okładki)
 });

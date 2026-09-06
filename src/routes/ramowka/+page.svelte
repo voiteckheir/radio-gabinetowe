@@ -1,9 +1,11 @@
 <script lang="ts">
     import Seo from "$lib/Seo.svelte";
-    import { dniTygodnia, wszystkieAudycje } from "$lib/data.js";
+    // ZMIANA: Usunęliśmy dniTygodnia z importu, generujemy je lokalnie
+    import { wszystkieAudycje } from "$lib/data.js";
 
     type Audycja = {
         id: number;
+        dzienId: number;
         czas: string;
         tytul: string;
         prowadzacy: string;
@@ -11,56 +13,45 @@
         opis: string;
         linkPodcast: string | null;
     };
-/*
-    const dniTygodnia = [
-        { id: 1, data: '07.08', dzien: 'PT.', aktywne: false },
-        { id: 2, data: '08.08', dzien: 'SB.', aktywne: false },
-        { id: 3, data: 'Wczoraj', dzien: 'ND.', aktywne: false },
-        { id: 4, data: 'Dzisiaj', dzien: 'PN.', aktywne: true },
-        { id: 5, data: 'Jutro', dzien: 'WT.', aktywne: false },
-        { id: 6, data: '12.08', dzien: 'ŚR.', aktywne: false },
-        { id: 7, data: '13.08', dzien: 'CZ.', aktywne: false }
-    ];
-*/
-    const audycje: Audycja[] = [
-        { 
-            id: 1, 
-            czas: '06:00', 
-            tytul: 'Poranne Witaminy', 
-            prowadzacy: 'Blok Muzyczny',
-            obrazek: 'FOTO',
-            opis: 'Najlepsza muzyka na przebudzenie. Rozpocznij dzień z pozytywną energią i największymi hitami, które postawią Cię na nogi.',
-            linkPodcast: null
-        },
-        { 
-            id: 2, 
-            czas: '10:00', 
-            tytul: 'Kawał Ciężkiego Metalu', 
-            prowadzacy: 'Redakcja',
-            obrazek: 'FOTO',
-            opis: 'Dwie godziny bezkompromisowych brzmień. Przegląd najnowszych wydawnictw ze świata metalu oraz klasyki, które kształtowały gatunek.',
-            linkPodcast: 'https://youtube.com'
-        },
-        { 
-            id: 3, 
-            czas: '13:00', 
-            tytul: 'Reklasycznie', 
-            prowadzacy: 'Blok Muzyczny',
-            obrazek: 'FOTO',
-            opis: 'Zupełnie nowe spojrzenie na klasykę. Utwory, które znasz, w aranżacjach, których się nie spodziewasz.',
-            linkPodcast: null
-        },
-        { 
-            id: 4, 
-            czas: '18:00', 
-            tytul: 'Wkraczając w film', 
-            prowadzacy: 'Marcin Polak',
-            obrazek: 'FOTO',
-            opis: 'Analiza muzyki i motywów dźwiękowych w kultowych dziełach kinematografii. Dziś na warsztat bierzemy Trzy bilbordy za Ebbing, Missouri.',
-            linkPodcast: 'https://youtube.com'
-        }
-    ];
 
+    // Uciszamy lintera, bo data jest potrzebna tylko do jednorazowego wygenerowania paska
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    function generujDniTygodnia() {
+        const dniNazwy = ['ND.', 'PN.', 'WT.', 'ŚR.', 'CZ.', 'PT.', 'SB.'];
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity
+        const dzisiaj = new Date();
+        const wynik = [];
+
+        for (let i = -3; i <= 3; i++) {
+            // eslint-disable-next-line svelte/prefer-svelte-reactivity
+            const data = new Date();
+            data.setDate(dzisiaj.getDate() + i);
+            
+            let etykieta = '';
+            if (i === -1) etykieta = 'Wczoraj';
+            else if (i === 0) etykieta = 'Dzisiaj';
+            else if (i === 1) etykieta = 'Jutro';
+            else {
+                const d = String(data.getDate()).padStart(2, '0');
+                const m = String(data.getMonth() + 1).padStart(2, '0');
+                etykieta = `${d}.${m}`;
+            }
+
+            wynik.push({
+                id: i,
+                data: etykieta,
+                dzien: dniNazwy[data.getDay()],
+                prawdziwyDzienTygodnia: data.getDay() 
+            });
+        }
+        return wynik;
+    }
+
+    const dniTygodnia = generujDniTygodnia();
+    
+    // Zmienne zdefiniowane TYLKO RAZ
+    let aktywnyDzienId = $state(0); 
+    let widoczneAudycje = $derived(wszystkieAudycje.filter(a => a.dzienId === aktywnyDzienId));
     let wybranaAudycja: Audycja | null = $state(null);
 
     function otworzModal(audycja: Audycja) {
@@ -74,18 +65,11 @@
     }
 
     function klikniecieWTlo(event: MouseEvent | KeyboardEvent) {
-        // Zamyka po kliknięciu w tło, lub po wciśnięciu Escape
         if (event.type === 'keydown' && (event as KeyboardEvent).key !== 'Escape' && (event as KeyboardEvent).key !== 'Enter') return;
-        
         if (event.target === event.currentTarget) {
             zamknijModal();
         }
     }
-    // Domyślnie ustawiamy dzień nr 4 ("Dzisiaj")
-    let aktywnyDzienId = $state(4); 
-    
-    // $derived: za każdym razem gdy zmieni się aktywnyDzienId, Svelte przefiltruje audycje
-    let widoczneAudycje = $derived(wszystkieAudycje.filter(a => a.dzienId === aktywnyDzienId));
 </script>
 
 <Seo 
@@ -100,26 +84,31 @@
             Ramówka
         </h1>
 
-        <!-- Nawigacja dni tygodnia -->
-        <!-- W nawigacji po dniach modyfikujemy przyciski: -->
-    <nav aria-label="Nawigacja po dniach tygodnia" class="flex overflow-x-auto gap-4 md:justify-center border-b border-zinc-800 pb-4 mb-10 no-scrollbar">
-        {#each dniTygodnia as dzien (dzien.id)}
-            <button 
-                onclick={() => aktywnyDzienId = dzien.id}
-                aria-current={aktywnyDzienId === dzien.id ? 'page' : undefined}
-                class="flex flex-col items-center justify-center min-w-[80px] group transition"
-            >
-                <span class="text-lg md:text-xl font-bold {aktywnyDzienId === dzien.id ? 'text-white' : 'text-zinc-400 group-hover:text-red-400'} transition">
-                    {dzien.data}
-                </span>
-                <span class="text-xs font-black tracking-widest mt-1 {aktywnyDzienId === dzien.id ? 'bg-[#d31a38] text-white px-2 py-0.5' : 'text-zinc-600'} transition">
-                    {dzien.dzien}
-                </span>
-            </button>
-        {/each}
-    </nav>
-    <div class="flex flex-col gap-4">
-        {#each widoczneAudycje as audycja (audycja.id)}
+        <nav aria-label="Nawigacja po dniach tygodnia" class="flex overflow-x-auto gap-4 md:justify-center border-b border-zinc-800 pb-4 mb-10 no-scrollbar">
+            {#each dniTygodnia as dzien (dzien.id)}
+                <button 
+                    onclick={() => aktywnyDzienId = dzien.id}
+                    aria-current={aktywnyDzienId === dzien.id ? 'page' : undefined}
+                    class="flex flex-col items-center justify-center min-w-20 group transition"
+                >
+                    <span class="text-lg md:text-xl font-bold {aktywnyDzienId === dzien.id ? 'text-white' : 'text-zinc-400 group-hover:text-red-400'} transition">
+                        {dzien.data}
+                    </span>
+                    <span class="text-xs font-black tracking-widest mt-1 {aktywnyDzienId === dzien.id ? 'bg-[#d31a38] text-white px-2 py-0.5' : 'text-zinc-600'} transition">
+                        {dzien.dzien}
+                    </span>
+                </button>
+            {/each}
+        </nav>
+
+        <div class="flex flex-col gap-4">
+            {#if widoczneAudycje.length === 0}
+                <div class="text-center text-zinc-500 py-10 font-bold uppercase tracking-widest">
+                    Brak audycji tego dnia.
+                </div>
+            {/if}
+
+            {#each widoczneAudycje as audycja (audycja.id)}
                 <button 
                     aria-label="Otwórz szczegóły audycji: {audycja.tytul} o {audycja.czas}"
                     onclick={() => otworzModal(audycja)}
@@ -155,7 +144,6 @@
 </div>
 
 {#if wybranaAudycja}
-    <!-- Zastąpiono svelte-ignore atrybutami dostępności (role, tabindex, onkeydown) -->
     <div 
         role="button"
         tabindex="0"
@@ -164,7 +152,6 @@
         onclick={klikniecieWTlo}
         onkeydown={klikniecieWTlo}
     >
-        <!-- Kontener modala zapobiega propagacji kliknięcia w tło -->
         <div 
             role="dialog" 
             tabindex="-1"
@@ -174,7 +161,6 @@
             onkeydown={(e) => e.stopPropagation()}
             class="bg-zinc-900 border-2 border-zinc-800 w-full max-w-2xl shadow-2xl relative flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-200 cursor-default"
         >
-            
             <button 
                 onclick={zamknijModal}
                 class="absolute top-2 right-2 text-zinc-400 hover:text-white bg-black/50 hover:bg-red-600 rounded p-1 transition-colors z-10"
@@ -204,6 +190,7 @@
                 </p>
                 
                 {#if wybranaAudycja.linkPodcast}
+                    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
                     <a 
                         href={wybranaAudycja.linkPodcast} 
                         target="_blank" 
@@ -216,7 +203,6 @@
                     </a>
                 {/if}
             </div>
-
         </div>
     </div>
 {/if}
