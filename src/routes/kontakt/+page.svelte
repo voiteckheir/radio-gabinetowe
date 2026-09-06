@@ -6,6 +6,9 @@
     let subject = $state('');
     let message = $state('');
     
+    // NOWOŚĆ: Zmienna pułapki na boty (Honeypot)
+    let honeypot = $state(''); 
+    
     // Status: 'idle' (gotowy), 'loading' (wysyła), 'success' (sukces), 'error' (błąd)
     let status = $state('idle');
     let komunikatBledu = $state('');
@@ -42,23 +45,37 @@
         status = 'loading';
         
         try {
-            // Symulacja wysyłania na serwer (do podpięcia pod OVH)
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
+            // Prawdziwe wysłanie na nasz nowy endpoint
+            const odpowiedz = await fetch('/api/kontakt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // WYSYŁAMY TEŻ HONEYPOT!
+                body: JSON.stringify({ email, subject, message, honeypot }) 
+            });
+
+            // Odbieramy odpowiedź z serwera
+            const wynik = await odpowiedz.json();
+
+            if (!odpowiedz.ok || !wynik.success) {
+                // Jeśli serwer zgłosił błąd (np. za dużo maili z tego IP), rzucamy błąd
+                throw new Error(wynik.message || 'Błąd z serwera pocztowego');
+            }
             
             // 3. Sukces i czyszczenie
             status = 'success';
             email = '';
             subject = '';
             message = '';
+            honeypot = '';
             
-            // Ukrycie komunikatu po 5 sekundach
             setTimeout(() => {
                 status = 'idle';
             }, 5000);
 
-        } catch (error) {
+        } catch (error: any) {
             status = 'error';
-            komunikatBledu = 'Wystąpił błąd serwera. Spróbuj ponownie za chwilę.';
+            // Wyświetlamy konkretny błąd (zwrócony z serwera) albo domyślny
+            komunikatBledu = error.message || 'Wystąpił błąd serwera pocztowego. Spróbuj ponownie za chwilę.';
         }
     }
 </script>
@@ -170,6 +187,12 @@
                         required
                     ></textarea>
                     <div class="text-right text-gray-500 text-xs mt-1">{message.length} / 2000</div>
+                </div>
+
+                <!-- NOWOŚĆ: Ukryte pole Honeypot. Używamy opasity-0 i absolute, żeby czytniki ekranowe i boty myślały, że to normalne pole -->
+                <div class="absolute opacity-0 -z-50 h-0 overflow-hidden" aria-hidden="true">
+                    <label for="website_url">Strona WWW</label>
+                    <input type="text" id="website_url" name="website_url" bind:value={honeypot} tabindex="-1" autocomplete="off">
                 </div>
                 
                 <button 

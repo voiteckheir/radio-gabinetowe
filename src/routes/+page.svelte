@@ -3,36 +3,34 @@
     import { player } from '$lib/player.svelte.js';
     import { flip } from 'svelte/animate';
     import { onMount, onDestroy } from 'svelte';
-    import { bazaPartnerow, bazaArtystow } from '$lib/data.js';
 
     // Odbieramy dane pobrane z Sanity przez plik +page.ts
     let { data } = $props();
 
-    // Definiujemy naszą funkcję odpalania podcastu (teraz używamy audioUrl z Sanity)
+    // Definiujemy naszą funkcję odpalania podcastu
     function odpalPodcast(pod: any) {
         player.isLive = false;
         player.streamUrl = pod.audioUrl;
         player.currentTitle = pod.tytul;
         player.currentSubtitle = pod.autor || 'Gab In Net';
-        player.currentImage = pod.imageUrl || null; // Pobiera okładkę z Sanity!
+        player.currentImage = pod.imageUrl || null; 
         player.isPlaying = true;
     }
 
-    type Podcast = {
-        id: number;
-        tytul: string;
-        autor: string;
-        kategoria: string;
-        czas: string;
-        audioUrl: string;
-        youtubeUrl: string;
-    };
+    // --- ARTYŚCI Z SANITY (Poprawiona reaktywność Svelte 5) ---
+    // Używamy $derived dla Artysty Miesiąca
+    let artystaMiesiaca = $derived(data.artists.find((a: any) => a.artystaMiesiaca) || data.artists[0]);
+    
+    // Karuzelę inicjujemy jako pustą, a napełniamy ją efektem
+    let karuzelaArtystow = $state<any[]>([]);
+    
+    $effect(() => {
+        if (data.artists && karuzelaArtystow.length === 0) {
+            karuzelaArtystow = data.artists.filter((a: any) => a._id !== artystaMiesiaca?._id);
+        }
+    });
 
-
-
-    let partnerzy = $state(bazaPartnerow);
-    const artystaMiesiaca = bazaArtystow[0];
-    let karuzelaArtystow = $state(bazaArtystow.slice(1));
+    let partnerzy = $state(data.partner || []);
 
     let autoPlayPartnerzy: ReturnType<typeof setInterval>;
     let pauseTimeoutPartnerzy: ReturnType<typeof setTimeout>;
@@ -67,9 +65,11 @@
         }, 20000);
     }
 
+    // --- FORMULARZ KONTAKTOWY (STRONA GŁÓWNA) ---
     let imieHome = $state('');
     let emailHome = $state('');
     let messageHome = $state('');
+    let honeypot = $state(''); // Pułapka na boty
     
     let formStatus = $state('idle'); 
     let formError = $state('');
@@ -103,19 +103,32 @@
         formStatus = 'loading';
         
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
+            // Prawdziwe wysłanie na nasz nowy endpoint
+            const odpowiedz = await fetch('/api/kontakt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: emailHome, imie: imieHome, message: messageHome, honeypot }) 
+            });
+
+            const wynik = await odpowiedz.json();
+
+            if (!odpowiedz.ok || !wynik.success) {
+                throw new Error(wynik.message || 'Błąd z serwera pocztowego');
+            }
             
             formStatus = 'success';
-            imieHome = '';
             emailHome = '';
+            imieHome = '';
             messageHome = '';
+            honeypot = '';
             
             setTimeout(() => {
                 formStatus = 'idle';
             }, 5000);
-        } catch (error) {
+
+        } catch (error: any) {
             formStatus = 'error';
-            formError = 'Wystąpił błąd. Spróbuj ponownie.';
+            formError = error.message || 'Wystąpił błąd serwera pocztowego. Spróbuj ponownie za chwilę.';
         }
     }
 
@@ -163,7 +176,6 @@
         {#each data.posts as wpis (wpis._id)}
             <article class="bg-white p-6 shadow-sm rounded border-t-4 border-red-800 flex flex-col hover:shadow-md transition duration-300">
 
-                <!-- ZMIANA: Kontener na zdjęcie z warunkiem wyświetlania -->
                 <div class="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center text-gray-400 overflow-hidden relative">
                     {#if wpis.imageUrl}
                         <img src={wpis.imageUrl} alt={wpis.tytul} class="absolute inset-0 w-full h-full object-cover"/>
@@ -184,7 +196,6 @@
 </section>
 
 <!-- SEKCJA PODCASTY -->
-<!-- SEKCJA PODCASTY -->
 <section class="max-w-7xl mx-auto px-4 w-full mb-24">
     <div class="flex items-center justify-between mb-8 border-b-4 border-red-800 pb-2">
         <h2 class="text-3xl font-black uppercase">POSŁUCHAJ NASZYCH PODCASTÓW</h2>
@@ -197,7 +208,6 @@
         <div class="relative w-full aspect-square bg-red-950 rounded mb-4 overflow-hidden group">
             <div class="absolute inset-0 flex items-center justify-center text-red-900 font-bold opacity-30 text-4xl" aria-hidden="true">FOTO</div>
             
-            <!-- ZMIANA: Zdjęcie renderuje się tylko, gdy faktycznie wrzuciłeś je do Sanity -->
             {#if pod.imageUrl}
                 <img src={pod.imageUrl} alt="Okładka odcinka" class="absolute inset-0 w-full h-full object-cover" />
             {/if}
@@ -215,7 +225,6 @@
                     <div class="mt-auto flex items-center justify-between text-xs font-medium text-red-300 border-t border-red-700 pt-3">
                         <span>{pod.kategoria}, {pod.czas}</span>
                         
-                        <!-- ZMIANA: Warunek sprawdzający, czy jest YouTube -->
                         {#if pod.youtubeUrl}
                             <a href={pod.youtubeUrl} target="_blank" rel="noopener noreferrer" class="hover:text-white transition" aria-label="Obejrzyj na YouTube: {pod.tytul}">
                                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M21.582 6.186a2.6 2.6 0 0 0-1.838-1.852C18.125 3.9 12 3.9 12 3.9s-6.125 0-7.744.434a2.6 2.6 0 0 0-1.838 1.852C2 7.828 2 12 2 12s0 4.172.418 5.814a2.6 2.6 0 0 0 1.838 1.852C5.875 20.1 12 20.1 12 20.1s6.125 0 7.744-.434a2.6 2.6 0 0 0 1.838-1.852C22 16.172 22 12 22 12s0-4.172-.418-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
@@ -249,31 +258,31 @@
         </div>
     </div>
 
-    <!-- Zmieniono układ, aby lewy kafel nie rósł w nieskończoność -->
     <div class="flex flex-col lg:flex-row gap-8 overflow-hidden items-center lg:items-stretch">
         
-        <!-- ZMIANA: Sztywna szerokość (w-64 sm:w-72) zamiast lg:w-1/3 -->
-        <a href="/artysci/{artystaMiesiaca.slug}" class="block w-64 sm:w-72 shrink-0 bg-[#d31a38] p-4 group transition-transform duration-300 hover:scale-[1.02] shadow-lg relative" aria-label="Profil artysty miesiąca: {artystaMiesiaca.nazwa}">
+        <a href="/artysci/{artystaMiesiaca?.slug}" class="block w-64 sm:w-72 shrink-0 bg-[#d31a38] p-4 group transition-transform duration-300 hover:scale-[1.02] shadow-lg relative" aria-label="Profil artysty miesiąca: {artystaMiesiaca?.nazwa}">
             <div class="absolute top-0 left-0 bg-black text-white text-xs font-black uppercase tracking-widest px-4 py-2 z-10" aria-hidden="true">
                 Artysta Miesiąca
             </div>
             
-            <!-- ZMIANA: aspect-square zamiast aspect-4/5, aby pasował do karuzeli -->
             <div class="w-full aspect-square bg-zinc-900 border-2 border-black flex items-center justify-center relative overflow-hidden mt-6">
-                <span class="text-zinc-600 font-bold tracking-widest text-2xl" aria-hidden="true">{artystaMiesiaca.zdjecie}</span>
+                {#if artystaMiesiaca?.zdjecieUrl}
+                    <img src={artystaMiesiaca.zdjecieUrl} alt={artystaMiesiaca.nazwa} class="w-full h-full object-cover" />
+                {:else}
+                    <span class="text-zinc-600 font-bold tracking-widest text-2xl" aria-hidden="true">FOTO</span>
+                {/if}
             </div>
             <div class="bg-black text-white text-center font-black uppercase text-2xl py-3 mt-4 border-2 border-black shadow-md">
-                {artystaMiesiaca.nazwa}
+                {artystaMiesiaca?.nazwa}
             </div>
             <div class="text-center text-red-200 uppercase tracking-widest text-xs mt-2 font-bold">
-                {artystaMiesiaca.gatunek}
+                {artystaMiesiaca?.gatunek}
             </div>
         </a>
 
-        <!-- ZMIANA: grow zamiast lg:w-2/3, aby karuzela wypełniła resztę wolnego miejsca -->
         <div class="grow overflow-hidden pb-4 flex items-center">
             <div class="flex gap-6 w-max items-center h-full">
-                {#each karuzelaArtystow as artysta (artysta.id)}
+                {#each karuzelaArtystow as artysta (artysta._id)}
                     <a 
                         href="/artysci/{artysta.slug}"
                         animate:flip={{ duration: 500 }}
@@ -281,7 +290,11 @@
                         aria-label="Profil artysty: {artysta.nazwa}"
                     >
                         <div class="w-full aspect-square bg-zinc-900 border-2 border-black flex items-center justify-center relative overflow-hidden">
-                            <span class="text-zinc-600 font-bold tracking-widest" aria-hidden="true">{artysta.zdjecie}</span>
+                            {#if artysta.zdjecieUrl}
+                                <img src={artysta.zdjecieUrl} alt={artysta.nazwa} class="w-full h-full object-cover" />
+                            {:else}
+                                <span class="text-zinc-600 font-bold tracking-widest" aria-hidden="true">FOTO</span>
+                            {/if}
                         </div>
                         <div class="bg-black text-white text-center font-black uppercase text-lg py-2 mt-3 border-2 border-black">
                             {artysta.nazwa}
@@ -312,10 +325,16 @@
 
         <div class="w-full overflow-hidden pb-4">
             <div class="flex gap-6 w-max">
-                {#each partnerzy as partner (partner.id)}
+                {#each partnerzy as partner (partner._id)}
                     <div animate:flip={{ duration: 500 }} class="w-40 h-48 sm:w-48 sm:h-56 md:w-56 md:h-64 shrink-0 bg-white flex flex-col p-4 shadow-lg rounded-sm hover:shadow-xl transition-shadow">
                         <div class="grow flex items-center justify-center w-full overflow-hidden mb-2 relative">
-                            <span class="text-zinc-200 font-bold tracking-widest text-2xl" aria-hidden="true">LOGO</span>
+
+                            {#if partner.logoUrl}
+                                <img src={partner.logoUrl} alt={partner.nazwa} class="w-full h-full object-contain p-2" />
+                            {:else}
+                                <span class="text-zinc-200 font-bold tracking-widest text-2xl" aria-hidden="true">LOGO</span>
+                            {/if}
+                        
                         </div>
                         <div class="shrink-0 w-full border-t border-zinc-100 pt-2 flex items-center justify-center h-10">
                             <span class="text-black font-black text-center uppercase tracking-wider text-[10px] md:text-xs leading-tight line-clamp-2">
@@ -394,6 +413,12 @@
                         <label for="wiadomosc_home" class="absolute top-4 left-3 text-gray-500 text-sm transition-all peer-focus:-top-3 peer-focus:text-xs peer-focus:text-gray-400 peer-valid:-top-3 peer-valid:text-xs peer-valid:text-gray-400 bg-black px-1">Wiadomość *</label>
                     </div>
                     <div class="text-right text-gray-600 text-xs mt-1 font-mono">{messageHome.length} / 2000</div>
+                </div>
+
+                <!-- NOWOŚĆ: Ukryte pole Honeypot. Używamy opasity-0 i absolute, żeby czytniki ekranowe i boty myślały, że to normalne pole -->
+                <div class="absolute opacity-0 -z-50 h-0 overflow-hidden" aria-hidden="true">
+                    <label for="website_url_home">Strona WWW</label>
+                    <input type="text" id="website_url_home" name="website_url" bind:value={honeypot} tabindex="-1" autocomplete="off">
                 </div>
                 
                 <button 

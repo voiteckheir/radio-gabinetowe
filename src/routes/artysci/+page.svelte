@@ -1,23 +1,14 @@
 <script lang="ts">
-
     import Seo from '$lib/Seo.svelte';
-    // Runa przechowująca wpisany tekst w wyszukiwarkę
+    
+    let { data } = $props(); // Odbieramy dane z chmury!
     let searchQuery = $state('');
     
-
-    // Baza artystów (Później podmienimy na API z Sanity)
-    const artysci = [
-        { id: 1, nazwa: 'MARQUS MARS', zdjecie: 'FOTO', slug: 'marqus-mars' },
-        { id: 2, nazwa: 'DJ VELVET SKY', zdjecie: 'FOTO', slug: 'dj-velvet-sky' },
-        { id: 3, nazwa: 'YOENNA', zdjecie: 'FOTO', slug: 'yoenna' },
-        { id: 4, nazwa: 'WØJTEK', zdjecie: 'FOTO', slug: 'wojtek' },
-        { id: 5, nazwa: 'WHOSMYK', zdjecie: 'FOTO', slug: 'whosmyk' },
-        { id: 6, nazwa: 'MARCIN POLAK', zdjecie: 'FOTO', slug: 'marcin-polak' }
-    ];
-
-    // Magia Svelte 5: Lista automatycznie filtruje się przy każdej zmianie searchQuery
+    // Svelte 5 dynamicznie filtruje dane z Sanity
     let przefiltrowaniArtysci = $derived(
-        artysci.filter(artysta => artysta.nazwa.toLowerCase().includes(searchQuery.toLowerCase()))
+        (data.artysci || []).filter((artysta: any) => 
+            artysta.nazwa.toLowerCase().includes(searchQuery.toLowerCase())
+        )
     );
 </script>
 
@@ -60,7 +51,7 @@
 
         <!-- SIATKA ARTYSTÓW -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-            {#each przefiltrowaniArtysci as artysta (artysta.id)}
+            {#each przefiltrowaniArtysci as artysta (artysta._id)}
                 
                 <!-- Karta Artysty (Klikalna - prowadzi do dynamicznej podstrony) -->
                 <a 
@@ -71,8 +62,11 @@
                     
                     <!-- Kontener na zdjęcie -->
                     <div class="w-full aspect-square bg-zinc-900 border-2 border-black flex items-center justify-center relative overflow-hidden">
-                        <span class="text-zinc-600 font-bold tracking-widest">{artysta.zdjecie}</span>
-                        <!-- Tu docelowo będzie <img src={artysta.zdjecie} class="w-full h-full object-cover" /> -->
+                        {#if artysta.zdjecieUrl}
+                            <img src={artysta.zdjecieUrl} alt={artysta.nazwa} class="w-full h-full object-cover" />
+                        {:else}
+                            <span class="text-zinc-600 font-bold tracking-widest">FOTO</span>
+                        {/if}
                     </div>
                     
                     <!-- Tabliczka z imieniem -->

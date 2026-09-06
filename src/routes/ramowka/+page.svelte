@@ -1,47 +1,58 @@
 <script lang="ts">
     import Seo from "$lib/Seo.svelte";
-    // ZMIANA: Usunęliśmy dniTygodnia z importu, generujemy je lokalnie
-    import { wszystkieAudycje } from "$lib/data.js";
+    import { onMount } from 'svelte';
+    import { PUBLIC_RADIO_HOST, PUBLIC_STATION_SLUG } from '$env/static/public';
+
+    let { data } = $props();
 
     type Audycja = {
         id: number;
-        dzienId: number;
         czas: string;
         tytul: string;
         prowadzacy: string;
-        obrazek: string;
+        obrazekUrl: string | null;
         opis: string;
         linkPodcast: string | null;
     };
 
-    // Uciszamy lintera, bo data jest potrzebna tylko do jednorazowego wygenerowania paska
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity
+    type AzuraScheduleItem = {
+        id: number;
+        name: string;
+        start_timestamp: number;
+        end_timestamp: number;
+    };
+
+    function toYYYYMMDD(date: Date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
     function generujDniTygodnia() {
         const dniNazwy = ['ND.', 'PN.', 'WT.', 'ŚR.', 'CZ.', 'PT.', 'SB.'];
-        // eslint-disable-next-line svelte/prefer-svelte-reactivity
         const dzisiaj = new Date();
         const wynik = [];
 
         for (let i = -3; i <= 3; i++) {
-            // eslint-disable-next-line svelte/prefer-svelte-reactivity
-            const data = new Date();
-            data.setDate(dzisiaj.getDate() + i);
+            const dataObliczana = new Date();
+            dataObliczana.setDate(dzisiaj.getDate() + i);
             
             let etykieta = '';
             if (i === -1) etykieta = 'Wczoraj';
             else if (i === 0) etykieta = 'Dzisiaj';
             else if (i === 1) etykieta = 'Jutro';
             else {
-                const d = String(data.getDate()).padStart(2, '0');
-                const m = String(data.getMonth() + 1).padStart(2, '0');
+                const d = String(dataObliczana.getDate()).padStart(2, '0');
+                const m = String(dataObliczana.getMonth() + 1).padStart(2, '0');
                 etykieta = `${d}.${m}`;
             }
 
             wynik.push({
                 id: i,
                 data: etykieta,
-                dzien: dniNazwy[data.getDay()],
-                prawdziwyDzienTygodnia: data.getDay() 
+                dzien: dniNazwy[dataObliczana.getDay()],
+                fullDate: toYYYYMMDD(dataObliczana) 
             });
         }
         return wynik;
@@ -49,10 +60,61 @@
 
     const dniTygodnia = generujDniTygodnia();
     
-    // Zmienne zdefiniowane TYLKO RAZ
+    // Zmienne zadeklarowane TYLKO RAZ
     let aktywnyDzienId = $state(0); 
-    let widoczneAudycje = $derived(wszystkieAudycje.filter(a => a.dzienId === aktywnyDzienId));
     let wybranaAudycja: Audycja | null = $state(null);
+    let loading = $state(true);
+    let azuraSchedule = $state<AzuraScheduleItem[]>([]);
+
+    onMount(async () => {
+        try {
+            const startStr = dniTygodnia[0].fullDate;
+            const endStr = dniTygodnia[6].fullDate;
+            
+            const url = `${PUBLIC_RADIO_HOST}/api/station/${PUBLIC_STATION_SLUG}/schedule?start=${startStr}&end=${endStr}`;
+            const res = await fetch(url);
+            const dataAzura = await res.json();
+            
+            azuraSchedule = dataAzura;
+        } catch (e) {
+            console.error("Błąd pobierania ramówki z AzuraCast:", e);
+        } finally {
+            loading = false;
+        }
+    });
+
+    let widoczneAudycje = $derived.by(() => {
+        const aktywnyDzien = dniTygodnia.find(d => d.id === aktywnyDzienId);
+        if (!aktywnyDzien) return [];
+
+        const zDanegoDnia = azuraSchedule.filter(item => {
+            const startDate = new Date(item.start_timestamp * 1000);
+            return toYYYYMMDD(startDate) === aktywnyDzien.fullDate;
+        })
+        .sort((a, b) => a.start_timestamp - b.start_timestamp);
+
+        return zDanegoDnia.map(item => {
+            const czystyTytulAzura = item.name.replace(/^[.\s]+/, '').trim().toLowerCase();
+            
+            // Wymuszamy typ 'any[]', żeby zadowolić lintera
+            const meta = (data.audycjeSanity as any[]).find((a: any) => 
+                a.tytul.trim().toLowerCase() === czystyTytulAzura
+            );
+            
+            const startDate = new Date(item.start_timestamp * 1000);
+            const czasStart = startDate.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+
+            return {
+                id: item.id || Math.random(),
+                czas: czasStart,
+                tytul: item.name.replace(/^[.\s]+/, ''), 
+                prowadzacy: meta?.prowadzacy || 'Radio Gabinetowe',
+                obrazekUrl: meta?.obrazekUrl || null,
+                opis: meta?.opis || 'Włącz nas na żywo, aby posłuchać tego punktu programu.',
+                linkPodcast: meta?.linkPodcast || null
+            };
+        });
+    });
 
     function otworzModal(audycja: Audycja) {
         wybranaAudycja = audycja;
@@ -102,9 +164,13 @@
         </nav>
 
         <div class="flex flex-col gap-4">
-            {#if widoczneAudycje.length === 0}
+            {#if loading}
+                <div class="flex items-center justify-center py-20 text-zinc-500 font-bold tracking-widest animate-pulse">
+                    Łączenie ze studiem...
+                </div>
+            {:else if widoczneAudycje.length === 0}
                 <div class="text-center text-zinc-500 py-10 font-bold uppercase tracking-widest">
-                    Brak audycji tego dnia.
+                    Brak przypisanych audycji na ten dzień.
                 </div>
             {/if}
 
@@ -118,8 +184,13 @@
                         {audycja.czas}
                     </div>
                     
-                    <div class="w-20 h-20 bg-zinc-800 border-2 border-black flex items-center justify-center shrink-0 shadow-inner group-hover:border-[#d31a38] transition-colors" aria-hidden="true">
-                        <span class="text-zinc-600 font-bold text-xs tracking-widest">{audycja.obrazek}</span>
+                    <div class="w-20 h-20 bg-zinc-800 border-2 border-black flex items-center justify-center shrink-0 shadow-inner group-hover:border-[#d31a38] transition-colors relative overflow-hidden" aria-hidden="true">
+                        <!-- Wyświetlamy okładkę z Sanity lub ikonkę zastępczą -->
+                        {#if audycja.obrazekUrl}
+                            <img src={audycja.obrazekUrl} alt="" class="w-full h-full object-cover" />
+                        {:else}
+                            <span class="text-zinc-600 font-bold text-xs tracking-widest">GAB</span>
+                        {/if}
                     </div>
                     
                     <div class="flex flex-col grow">
@@ -173,8 +244,13 @@
 
             <div class="bg-zinc-950 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-zinc-800 min-w-50" aria-hidden="true">
                 <div class="text-4xl font-black text-red-500 mb-4">{wybranaAudycja.czas}</div>
-                <div class="w-32 h-32 bg-zinc-800 border-2 border-black flex items-center justify-center shadow-lg">
-                    <span class="text-zinc-600 font-bold">{wybranaAudycja.obrazek}</span>
+                <div class="w-32 h-32 bg-zinc-800 border-2 border-black flex items-center justify-center shadow-lg relative overflow-hidden">
+                    <!-- Wyświetlamy okładkę z Sanity na modalu -->
+                    {#if wybranaAudycja.obrazekUrl}
+                        <img src={wybranaAudycja.obrazekUrl} alt="" class="w-full h-full object-cover" />
+                    {:else}
+                        <span class="text-zinc-600 font-bold">GAB</span>
+                    {/if}
                 </div>
             </div>
 

@@ -1,9 +1,8 @@
 <script lang="ts">
-    // W Svelte 5 odbieramy dane z pliku +page.js za pomocą runy $props()
     let { data } = $props();
     
-    // Tworzymy skrót, żeby nie pisać wszędzie 'data.artysta.nazwa', tylko 'artysta.nazwa'
-    let artysta = data.artysta;
+    // ZMIANA: Używamy $derived, żeby uciszyć lintera Svelte 5
+    let artysta = $derived(data.artysta);
 </script>
 
 <svelte:head>
@@ -15,7 +14,7 @@
     <div class="max-w-5xl mx-auto px-4 w-full">
         
         <!-- Pasek powrotu -->
-        <a href="/artysci" class="inline-flex items-center gap-2 text-white/60 hover:text-red-500 font-bold uppercase tracking-widest text-sm mb-12 transition">
+        <a href="/" class="inline-flex items-center gap-2 text-white/60 hover:text-red-500 font-bold uppercase tracking-widest text-sm mb-12 transition">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -30,8 +29,12 @@
 
             <!-- Zdjęcie Artysty (Zajmuje 1/3 szerokości) -->
             <div class="w-full md:w-1/3 shrink-0">
-                <div class="w-full aspect-square bg-zinc-800 border-2 border-black flex items-center justify-center text-zinc-500 font-black tracking-widest text-xl shadow-2xl">
-                    {artysta.zdjecie}
+                <div class="w-full aspect-square bg-zinc-800 border-2 border-black flex items-center justify-center relative overflow-hidden text-zinc-500 font-black tracking-widest text-xl shadow-2xl">
+                    {#if artysta.zdjecieUrl}
+                        <img src={artysta.zdjecieUrl} alt={artysta.nazwa} class="w-full h-full object-cover" />
+                    {:else}
+                        FOTO
+                    {/if}
                 </div>
             </div>
 

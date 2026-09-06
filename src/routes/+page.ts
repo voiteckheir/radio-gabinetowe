@@ -21,14 +21,32 @@ export async function load() {
         youtubeUrl,
         "imageUrl": okladka.asset->url
     }`;
+    // NOWE: Zapytanie o artystów (Pobiera też informację, kto jest artystą miesiąca!)
+    const artistsQuery = `*[_type == "artysta"] | order(nazwa asc) {
+        _id,
+        nazwa,
+        "slug": slug.current,
+        gatunek,
+        artystaMiesiaca,
+        "zdjecieUrl": zdjecie.asset->url
+    }`;
+    const partnersQuery = `*[_type == "partner"] | order(_createdAt asc) {
+        _id,
+        nazwa,
+        "logoUrl": logo.asset->url
+    }`;
 
     // Odpytujemy Sanity w chmurze
     const posts = await client.fetch(postsQuery);
     const podcasts = await client.fetch(podcastsQuery);
+    const artists = await client.fetch(artistsQuery);
+    const partner = await client.fetch(partnersQuery);
 
     // Przekazujemy dane do komponentu +page.svelte
     return {
         posts,
-        podcasts
+        podcasts,
+        artists,
+        partner
     };
 }
