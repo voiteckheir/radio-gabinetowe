@@ -1,3 +1,5 @@
+// TYMCZASOWY SZTYWNY PLIK DO TESTÓW
+
 export const aktualnosci = [
 	{
 		id: 1,

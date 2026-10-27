@@ -248,7 +248,7 @@ $effect(() => {
     </div>
 </section>
 
-<!-- NOWA SEKCJA: ARTYŚCI (Artysta Miesiąca + Karuzela) -->
+<!-- SEKCJA ARTYŚCI -->
 <section class="max-w-7xl mx-auto px-4 w-full mb-24">
     
     <div class="flex items-center gap-4 mb-8">
@@ -354,7 +354,7 @@ $effect(() => {
     </div>
 </section>
 
-<!-- SEKCJA KONTAKTOWA (Czarna, zintegrowana) -->
+<!-- SEKCJA KONTAKTOWA -->
 <section class="bg-black pt-8 pb-16 mb-0 w-full overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 relative flex flex-col lg:flex-row items-center">
         <!-- Lewy czerwony panel -->
@@ -421,7 +421,7 @@ $effect(() => {
                     <div class="text-right text-gray-600 text-xs mt-1 font-mono">{messageHome.length} / 2000</div>
                 </div>
 
-                <!-- NOWOŚĆ: Ukryte pole Honeypot. Używamy opasity-0 i absolute, żeby czytniki ekranowe i boty myślały, że to normalne pole -->
+                <!-- Ukryte pole Honeypot. Używamy opasity-0 i absolute, żeby czytniki ekranowe i boty myślały, że to normalne pole -->
                 <div class="absolute opacity-0 -z-50 h-0 overflow-hidden" aria-hidden="true">
                     <label for="website_url_home">Strona WWW</label>
                     <input type="text" id="website_url_home" name="website_url" bind:value={honeypot} tabindex="-1" autocomplete="off">

@@ -1,12 +1,11 @@
 <script lang="ts">
     let { data } = $props();
     
-    // ZMIANA: Używamy $derived, żeby uciszyć lintera Svelte 5
     let artysta = $derived(data.artysta);
 </script>
 
 <svelte:head>
-    <!-- Dynamiczny tytuł strony pod kątem SEO (np. "MARQUS MARS | Radio Gabinetowe") -->
+    <!-- Dynamiczny tytuł strony (np. " 'ARTYSTA' | Radio Gabinetowe") -->
     <title>{artysta.nazwa} | Radio Gabinetowe</title>
 </svelte:head>
 
@@ -14,7 +13,7 @@
     <div class="max-w-5xl mx-auto px-4 w-full">
         
         <!-- Pasek powrotu -->
-        <a href="/" class="inline-flex items-center gap-2 text-white/60 hover:text-red-500 font-bold uppercase tracking-widest text-sm mb-12 transition">
+        <a href="/artysci" class="inline-flex items-center gap-2 text-white/60 hover:text-red-500 font-bold uppercase tracking-widest text-sm mb-12 transition">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
             </svg>
@@ -24,10 +23,9 @@
         <!-- KARTA ARTYSTY -->
         <div class="flex flex-col md:flex-row gap-10 bg-zinc-900 border-2 border-zinc-800 p-6 md:p-10 relative">
             
-            <!-- Czerwony akcent dekoracyjny u góry -->
             <div class="absolute top-0 left-0 w-full h-2 bg-[#d31a38]"></div>
 
-            <!-- Zdjęcie Artysty (Zajmuje 1/3 szerokości) -->
+            <!-- Zdjęcie Artysty -->
             <div class="w-full md:w-1/3 shrink-0">
                 <div class="w-full aspect-square bg-zinc-800 border-2 border-black flex items-center justify-center relative overflow-hidden text-zinc-500 font-black tracking-widest text-xl shadow-2xl">
                     {#if artysta.zdjecieUrl}
@@ -38,7 +36,7 @@
                 </div>
             </div>
 
-            <!-- Opis i Informacje (Zajmuje 2/3 szerokości) -->
+            <!-- Opis i Informacje -->
             <div class="flex flex-col justify-center">
                 
                 <span class="text-red-500 font-bold uppercase tracking-widest text-sm mb-2">

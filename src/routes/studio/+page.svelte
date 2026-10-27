@@ -5,7 +5,7 @@
     import { client } from '$lib/sanity';
 
     let { data }: any = $props(); 
-    // Pancerne zabezpieczenie: jeśli Sanity jeszcze nie zwróciło danych, tworzymy puste tablice
+    // jeśli Sanity jeszcze nie zwróciło danych, tworzymy puste tablice
     let ustawienia = $derived(data?.studioData || { wyposazenie: [], cennikSala: [], cennikPraca: [] });
 
     // --- DANE: Slajdy ---
@@ -70,57 +70,9 @@
             rozwinietaUsluga = id; 
         }
     }
-/*
-    const cennik_sala = [
-        { id: 1, usluga_sala: "Opłata początkowa", cena_sala: "10 zł" },
-        { id: 2, usluga_sala: "Sala prób", cena_sala: "30 zł/h" },
-        { id: 3, usluga_sala: "Sala prób z odsłuchem dousznym (do 7 indywidualnych miksów)", cena_sala: "30 zł/h" },
-        { id: 4, usluga_sala: "Mixing room", cena_sala: "20 zł/h" },
-        { id: 5, usluga_sala: "Nagrywanie próby na ścieżki", cena_sala: "W cenie najmu" },
-        { id: 6, usluga_sala: "Nagrywanie próby na ścieżki z realizatorem + miks", cena_sala: "+50 zł/h" },
-        { id: 7, usluga_sala: "Wyporzyczenie zestawu talerzy perkusyjnych", cena_sala: "+7 zł/h" },
-        { id: 8, usluga_sala: "Gitara elektryczna Vintage V100 Icon4", cena_sala: "+5 zł/h" },
-        { id: 9, usluga_sala: "Gitara basowa Washburn BB4", cena_sala: "+7 zł/h" },
-        { id: 10, usluga_sala: "Gitara akustyczna Fender FA-125ca", cena_sala: "+5 zł/h" },
-        { id: 11, usluga_sala: "Usługi nagraniowe, pozostawienie swojego sprzętu, rozliczenia miesięczne ze zniżką", cena_sala: "wycena indywidualna" }
-    ];
 
-    const cennik_praca = [
-        { id: 1, usluga_praca: "Godzina pracy studia z realizatorem (nagrania)", cena_praca: "80 zł" },
-        { id: 2, usluga_praca: "Godzina pracy studia bez realizatora", cena_praca: "40 zł" },
-        { id: 3, usluga_praca: "Miks (w zależności od ilości śladów/długości i skomplikowania utworu)", cena_praca: "od 150 zł" },
-        { id: 4, usluga_praca: "Mastering", cena_praca: "od 100 zł" },
-        { id: 5, usluga_praca: "Podcasty", cena_praca: "80 zł/h" },
-        { id: 6, usluga_praca: "Rekonstrukcja/Zgrywanie z analogowych nośników", cena_praca: "od 100 zł" },
-        { id: 7, usluga_praca: "Realizacja dźwięku live", cena_praca: "od 400 zł" },
-        { id: 8, usluga_praca: "Nagrania terenowe", cena_praca: "80 zł/h" }
-    ];
-
-    const wyposazenie = [
-        { id: 1, nazwa:  "Nagłośnienie kolumny aktywne RH Sound RHA 15/2/300P" },
-        { id: 2, nazwa:  "Nagłośnienie kolumny STX + wzmacniacz Samson 1800sx" },
-        { id: 3, nazwa:  "Zestaw perkusyjny PDP (centrala, werblel. hi tom, mid tom, floor tom) (talerze +7zł/h)" },
-        { id: 4, nazwa:  "Wzmacniacz lampowy Bugera 333xl + paczka Marshalla 412" },
-        { id: 5, nazwa:  "Combo gitarowe tranzystorowe Laney TF100" },
-        { id: 6, nazwa:  "Combo Basowe Ampeg BA110" },
-        { id: 7, nazwa:  "Klawiatura MIDI Alesis v61" },
-        { id: 8, nazwa:  "Klawiatura MIDI M-Audio Oxygen 25" },
-        { id: 9, nazwa:  "Klawiatura MIDI Keystation 61 III" },
-        { id: 10, nazwa: "Gitara elektryczna Vintage V100 Icon4 (+5zł/h)" },
-        { id: 11, nazwa: "Gitara basowa Washburn BB4 (+5zł/h)" },
-        { id: 12, nazwa: "Gitara basowa Cort Action Bass (+5zł/h)" },
-        { id: 13, nazwa: "Mikrofony dynamiczne" },
-        { id: 14, nazwa: "Mikrofony pojemnościowe" },
-        { id: 15, nazwa: "Statywy mikrofonowe" },
-        { id: 16, nazwa: "Statywy pod comba gitarowe" },
-        { id: 17, nazwa: "Mixer cyfrowy Behringer XR-18" },
-        { id: 18, nazwa: "Mixer analogowy Mackie Deigns CR-1604 (16 kanałów)" },
-        { id: 19, nazwa: "Laptop z DAW (Reaper)" },
-        { id: 20, nazwa: "" }
-    ];
-*/
     export async function load() {
-    // [0] na końcu oznacza, że bierzemy tylko PIERWSZY (i jedyny) dokument ustawień
+
     const query = `*[_type == "ustawieniaStudia"][0] {
         wyposazenie,
         cennikSala,
@@ -130,7 +82,6 @@
     const studioData = await client.fetch(query);
 
     return {
-        // Zabezpieczamy się na wypadek, gdybyś zapomniał opublikować dokument w Sanity
         studioData: studioData || { wyposazenie: [], cennikSala: [], cennikPraca: [] }
     };
 }
@@ -140,7 +91,7 @@
     title="Studio | Radio Gabinetowe"
     description="Nasze studio! Umów się na próbę, nagraj swój pierwszy utwór i wiele więcej."
 /> 
-
+ <!--Sekcja powitalna ze slajdami-->
 <section class="max-w-7xl mx-auto px-4 w-full mb-16">
     <h1 class="text-4xl md:text-5xl font-black mb-8 border-b-4 border-red-800 inline-block pb-2 uppercase tracking-wide">
         STUDIO RADIA GABINET
@@ -164,7 +115,7 @@
         {/if}
     </div>
 </section>
-
+<!-- SEKCJA USŁUGI -->
 <section class="max-w-7xl mx-auto px-4 w-full mb-20">
     <h2 class="text-3xl font-black mb-10 border-b-4 border-zinc-900 inline-block pb-2 uppercase text-gray-200">
         Nasze Usługi
@@ -241,12 +192,12 @@
     </div>
 </section>
 
-<!-- GŁÓWNA ZAWARTOŚĆ (Siatka 2-kolumnowa na komputerach) -->
+<!-- GŁÓWNA ZAWARTOŚĆ  -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12 max-w-7xl mx-auto px-4 w-full">
     
     <!-- LEWA KOLUMNA -->
     <div class="space-y-10">
-        
+        <!-- WYPOSAŻENIE -->
         <section class="bg-white p-8 shadow-sm rounded-lg border-t-4 border-zinc-900">
             <h3 class="text-2xl font-bold mb-4 text-gray-900">Wyposażenie</h3>
             <ul class="list-disc list-inside space-y-2 text-gray-700">
@@ -257,7 +208,7 @@
         {/each}
     </ul>
         </section>
-
+        <!-- SEKCJA GODZIN PRACY -->
         <section class="bg-red-800 text-white p-8 shadow-sm rounded-lg">
             <h3 class="text-2xl font-bold mb-4">Godziny i rezerwacje</h3>
             
@@ -276,7 +227,7 @@
                 </a>
             </div>
         </section>
-
+        <!-- SEKCJA GRAFIKU - KALENDARZ STUDIA -->
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
             <h3 class="text-2xl font-bold mb-6 text-gray-900">Grafik Studia</h3>
             
@@ -296,7 +247,7 @@
     <div class="space-y-10">
         
 
-        <!-- Cennik sali prób -->
+        <!-- CENNIK SALI PRÓB -->
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
             <h3 class="text-2xl font-bold mb-6 border-b-2 border-red-800 inline-block pb-1 text-gray-700">Cennik sali prób</h3>
             <ul class="space-y-4">
@@ -309,7 +260,7 @@
     </ul>
         </section>
 
-        <!-- Cennik pracy studia -->
+        <!-- CENNIK PRACY STUDIA -->
         <section class="bg-white p-8 shadow-sm rounded-lg border border-gray-100">
             <h3 class="text-2xl font-bold mb-6 border-b-2 border-red-800 inline-block pb-1 text-gray-700">Cennik pracy studia</h3>
             <ul class="space-y-4">

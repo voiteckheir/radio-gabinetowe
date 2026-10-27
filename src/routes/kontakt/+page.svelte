@@ -6,7 +6,7 @@
     let subject = $state('');
     let message = $state('');
     
-    // NOWOŚĆ: Zmienna pułapki na boty (Honeypot)
+    // Zmienna pułapki na boty (Honeypot)
     let honeypot = $state(''); 
     
     // Status: 'idle' (gotowy), 'loading' (wysyła), 'success' (sukces), 'error' (błąd)
@@ -189,17 +189,18 @@
                         class="w-full p-3 border border-gray-600 text-black rounded focus:outline-none focus:border-red-800 focus:ring-1 focus:ring-red-800 transition bg-gray-50 resize-y disabled:opacity-50" 
                         placeholder="Napisz nam, czego potrzebujesz!"
                         minlength="10"
+                        maxlength="2000"
                         required
                     ></textarea>
                     <div class="text-right text-gray-500 text-xs mt-1">{message.length} / 2000</div>
                 </div>
 
-                <!-- NOWOŚĆ: Ukryte pole Honeypot. Używamy opasity-0 i absolute, żeby czytniki ekranowe i boty myślały, że to normalne pole -->
+                <!-- Ukryte pole Honeypot. Używamy opasity-0 i absolute, żeby czytniki ekranowe i boty myślały, że to normalne pole -->
                 <div class="absolute opacity-0 -z-50 h-0 overflow-hidden" aria-hidden="true">
                     <label for="website_url">Strona WWW</label>
                     <input type="text" id="website_url" name="website_url" bind:value={honeypot} tabindex="-1" autocomplete="off">
                 </div>
-                
+                <!--Przycisk do zatwierdzenia i wysłania-->
                 <button 
                     type="submit" 
                     disabled={status === 'loading'}

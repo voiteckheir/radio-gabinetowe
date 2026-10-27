@@ -10,7 +10,7 @@ export default defineType({
       title: 'Tytuł w panelu',
       type: 'string',
       hidden: true, 
-      initialValue: 'Ustawienia Studia' // Żeby ładnie wyglądało na liście w Sanity
+      initialValue: 'Ustawienia Studia'
     }),
     
     // --- WYPOSAŻENIE ---

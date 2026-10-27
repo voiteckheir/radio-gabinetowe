@@ -1,9 +1,11 @@
+//sitemap.xml/+server.js
 // Importujemy bazę artystów, żeby móc dla każdego wygenerować jego własny link w mapie Google
 import { bazaArtystow } from '$lib/data.js';
+import { client } from '$lib/sanity';
 
 export async function GET() {
 	// Wpisz tutaj Waszą prawdziwą docelową domenę
-	const websiteUrl = 'https://twojadomena.pl';
+	const websiteUrl = 'https://radiogabinetowe.pl';
 
 	// Ręcznie wpisane, główne podstrony radia
 	const mainPages = [
@@ -17,33 +19,36 @@ export async function GET() {
 	// Rozpoczynamy budowę pliku XML
 	let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
 	xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+	// Pobieramy dynamiczne linki prosto z Sanity
+	const query = `{
+        "artysci": *[_type == "artysta"].slug.current,
+        "aktualnosci": *[_type == "post"].slug.current
+    }`;
+	const data = await client.fetch(query);
 
-	// 1. Dodajemy główne podstrony
+	let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+	xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+	// 1. Główne podstrony
 	mainPages.forEach((page) => {
-		xml += `  <url>\n`;
-		xml += `    <loc>${websiteUrl}${page}</loc>\n`;
-		xml += `    <changefreq>weekly</changefreq>\n`;
-		xml += `    <priority>${page === '' ? '1.0' : '0.8'}</priority>\n`;
-		xml += `  </url>\n`;
+		xml += `  <url>\n    <loc>${websiteUrl}${page}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>${page === '' ? '1.0' : '0.8'}</priority>\n  </url>\n`;
 	});
 
-	// 2. Dodajemy dynamiczne strony WSZYSTKICH artystów z bazy
-	bazaArtystow.forEach((artysta) => {
-		xml += `  <url>\n`;
-		// Generujemy link np. https://twojadomena.pl/artysci/marqus-mars
-		xml += `    <loc>${websiteUrl}/artysci/${artysta.slug}</loc>\n`;
-		xml += `    <changefreq>monthly</changefreq>\n`;
-		xml += `    <priority>0.6</priority>\n`;
-		xml += `  </url>\n`;
+	// 2. Dynamiczne strony artystów
+	(data.artysci || []).forEach((slug) => {
+		xml += `  <url>\n    <loc>${websiteUrl}/artysci/${slug}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+	});
+
+	// 3. Dynamiczne strony postów (Aktualności)
+	(data.aktualnosci || []).forEach((slug) => {
+		xml += `  <url>\n    <loc>${websiteUrl}/aktualnosci/${slug}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
 	});
 
 	xml += `</urlset>`;
 
-	// Zwracamy wynik do przeglądarki lub bota Google jako poprawny format XML
 	return new Response(xml, {
 		headers: {
 			'Content-Type': 'application/xml',
-			// Każe przeglądarkom buforować tę mapę na 1 godzinę (3600 sekund)
 			'Cache-Control': 'max-age=0, s-maxage=3600'
 		}
 	});

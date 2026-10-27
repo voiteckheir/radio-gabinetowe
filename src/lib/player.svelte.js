@@ -20,5 +20,5 @@ export const player = $state({
 	// Metadane do wyświetlenia w odtwarzaczu
 	currentTitle: 'Łączenie z serwerem...',
 	currentSubtitle: 'Gab In Net',
-	currentImage: null // <-- NOWA ZMIENNA (null oznacza brak okładki)
+	currentImage: null // jeżeli nie ma okładki zwraca null
 });

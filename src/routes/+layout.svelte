@@ -1,7 +1,7 @@
 <script lang="ts">
     import { player } from '$lib/player.svelte.js';
     import { page } from '$app/stores';
-    import { onMount, onDestroy, untrack } from 'svelte'; // <-- DODANO untrack
+    import { onMount, onDestroy, untrack } from 'svelte';
     import '../app.css'; 
     import { PUBLIC_RADIO_HOST, PUBLIC_STATION_SLUG } from '$env/static/public';
     import CookieBanner from '$lib/CookieBanner.svelte';
@@ -10,10 +10,11 @@
     
     let audioElement: HTMLAudioElement;
     let previousVolume = 0.5;
-    
-    // --- NOWE ZMIENNE DO PASKA POSTĘPU ---
     let currentTime = $state(0);
     let duration = $state(0);
+
+    // NOWOŚĆ: Stan dla menu mobilnego
+    let isMenuOpen = $state(false);
 
     const RADIO_API_URL = `${PUBLIC_RADIO_HOST}/api/nowplaying/${PUBLIC_STATION_SLUG}`;
     let nowPlayingInterval: ReturnType<typeof setInterval>;
@@ -24,12 +25,11 @@
         }
     });
 
-    // NAPRAWIONY $effect - resetuje plik TYLKO gdy zmieni się adres (streamUrl)
     $effect(() => {
-        let url = player.streamUrl; // Reakcja tylko na nowy odcinek podcastu
+        let url = player.streamUrl; 
         
         if (audioElement) {
-            untrack(() => { // Ignorujemy zmianę player.isPlaying
+            untrack(() => { 
                 if (player.isPlaying) {
                     audioElement.load(); 
                     setTimeout(() => {
@@ -61,7 +61,6 @@
         }
     }
 
-    // --- NOWA FUNKCJA FORMATUJĄCA CZAS (np. 65 sekund -> 01:05) ---
     function formatTime(seconds: number) {
         if (isNaN(seconds) || seconds < 0) return "00:00";
         const m = Math.floor(seconds / 60);
@@ -105,12 +104,10 @@
 
 <div class="min-h-screen flex flex-col bg-black font-sans text-gray-100">
     
-    <!-- SKIP LINK (Dostępność dla nawigacji klawiaturą) -->
     <a href="#glowna-tresc" class="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-9999 bg-[#d31a38] text-white px-6 py-3 font-bold shadow-2xl">
         Przejdź do głównej treści
     </a>
 
-    <!-- GÓRNY PASEK (PLAYER + MENU) -->
     <div class="sticky top-0 z-50 w-full flex flex-col">
         
         <!-- ODTWARZACZ -->
@@ -118,10 +115,7 @@
             <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
                 
                 <div class="flex items-center gap-4 w-full md:w-auto overflow-hidden">
-                    
-                    <!-- KONTENER NA ZACHĘTĘ "SŁUCHAJ" I PRZYCISK PLAY -->
                     <div class="flex items-center gap-3 shrink-0">
-                        <!-- Napis pojawia się tylko, gdy odtwarzacz jest zatrzymany -->
                         {#if !player.isPlaying}
                             <span class="hidden sm:inline-block text-sm font-black uppercase tracking-widest text-red-200 animate-pulse">
                                 Słuchaj ➔
@@ -140,7 +134,6 @@
                         </button>
                     </div>
                     
-                    <!-- KONTENER NA ZDJĘCIE (Renderowany tylko wtedy, gdy currentImage istnieje) -->
                     {#if player.currentImage}
                         <div class="w-14 h-14 shrink-0 bg-red-950 overflow-hidden flex items-center justify-center relative shadow-inner">
                             <img src={player.currentImage} alt="Okładka" class="w-full h-full object-cover" />
@@ -148,39 +141,33 @@
                     {/if}
                     
                     <div class="flex flex-col justify-center min-w-0 grow">
-    <div class="flex items-center gap-2 mb-0.5">
-        {#if player.isLive}
-            <span class="bg-zinc-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">TERAZ</span>
-        {:else}
-            <span class="bg-white text-red-900 text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">PODCAST</span>
-        {/if}
-        <span class="text-xs uppercase tracking-wider font-semibold text-red-100 truncate">{player.currentSubtitle}</span>
-    </div>
-    <h3 class="font-bold text-xl md:text-2xl leading-none truncate w-full max-w-50 md:max-w-md">
-        {player.currentTitle}
-    </h3>
-    
-    <!-- NOWOŚĆ: PASEK POSTĘPU (WIDOCZNY TYLKO DLA PODCASTÓW) -->
-    {#if !player.isLive}
-        <div class="flex items-center gap-2 mt-2 w-full max-w-md">
-            <!-- Obecny czas -->
-            <span class="text-[10px] font-mono text-red-200 w-10 text-right">{formatTime(currentTime)}</span>
-            
-            <!-- Suwak (Range) -->
-            <input 
-                type="range" 
-                min="0" 
-                max={duration || 0} 
-                bind:value={currentTime} 
-                class="grow h-2 bg-red-950 rounded-lg appearance-none cursor-pointer accent-white" 
-                aria-label="Pasek postępu" 
-            />
-            
-            <!-- Czas całkowity -->
-            <span class="text-[10px] font-mono text-red-200 w-10">{formatTime(duration)}</span>
-        </div>
-    {/if}
-</div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            {#if player.isLive}
+                                <span class="bg-zinc-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">TERAZ</span>
+                            {:else}
+                                <span class="bg-white text-red-900 text-[10px] font-bold px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">PODCAST</span>
+                            {/if}
+                            <span class="text-xs uppercase tracking-wider font-semibold text-red-100 truncate">{player.currentSubtitle}</span>
+                        </div>
+                        <h3 class="font-bold text-xl md:text-2xl leading-none truncate w-full max-w-50 md:max-w-md">
+                            {player.currentTitle}
+                        </h3>
+                        
+                        {#if !player.isLive}
+                            <div class="flex items-center gap-2 mt-2 w-full max-w-md">
+                                <span class="text-[10px] font-mono text-red-200 w-10 text-right">{formatTime(currentTime)}</span>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max={duration || 0} 
+                                    bind:value={currentTime} 
+                                    class="grow h-2 bg-red-950 rounded-lg appearance-none cursor-pointer accent-white" 
+                                    aria-label="Pasek postępu" 
+                                />
+                                <span class="text-[10px] font-mono text-red-200 w-10">{formatTime(duration)}</span>
+                            </div>
+                        {/if}
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-4 justify-end w-full md:w-auto text-sm font-medium">
@@ -207,21 +194,47 @@
             </div>
         </div>
 
-        <!-- MENU GŁÓWNE -->
-        <header class="absolute top-full left-0 w-full z-10 bg-linear-to-b from-black/90 via-black/50 to-transparent pb-8">
-            <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-6">
+        <!-- MENU GŁÓWNE Z OBSŁUGĄ MOBILNĄ -->
+        <header class="absolute top-full left-0 w-full z-10 bg-gradient-to-b from-black/90 via-black/50 to-transparent pb-4 md:pb-8">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-6 relative">
                 
-                <a href="/" class="block transition hover:opacity-80" aria-label="Strona Główna">
-                    <img src="loga-gabinet/radio-logo-full-biale.webp" alt="Gab In Net - Logo Radia" class="h-12 md:h-16 w-auto object-contain" />
+                <!-- Logo -->
+                <a href="/" class="block transition hover:opacity-80 z-20" aria-label="Strona Główna">
+                    <img src="loga-gabinet/radio-logo-full-biale.webp" alt="Gab In Net - Logo Radia" class="h-10 md:h-16 w-auto object-contain" />
                 </a>
 
+                <!-- Przycisk Hamburger (Tylko mobilnie) -->
+                <button 
+                    class="md:hidden z-20 text-white p-2 focus:outline-none" 
+                    aria-label={isMenuOpen ? "Zamknij menu" : "Otwórz menu"}
+                    onclick={() => isMenuOpen = !isMenuOpen}
+                >
+                    {#if isMenuOpen}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    {:else}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    {/if}
+                </button>
+
                 <!-- eslint-disable svelte/no-navigation-without-resolve -->
-                <nav aria-label="Główna nawigacja" class="flex flex-wrap justify-center gap-8 text-sm font-black tracking-[0.15em] uppercase text-white">
+                <!-- Nawigacja Desktopowa -->
+                <nav aria-label="Główna nawigacja" class="hidden md:flex flex-wrap justify-center gap-8 text-sm font-black tracking-[0.15em] uppercase text-white">
                     <a href="/ramowka" class="hover:text-red-500 transition drop-shadow-md">RAMÓWKA</a>
                     <a href="/artysci" class="hover:text-red-500 transition drop-shadow-md">ARTYŚCI</a>
                     <a href="/studio" class="hover:text-red-500 transition drop-shadow-md">STUDIO</a>
                     <a href="/kontakt" class="hover:text-red-500 transition drop-shadow-md">KONTAKT</a>
                 </nav>
+
+                <!-- Nawigacja Mobilna (Rozwijana) -->
+                {#if isMenuOpen}
+                    <nav aria-label="Nawigacja mobilna" class="md:hidden absolute top-full left-0 w-full bg-black border-t border-zinc-800 flex flex-col items-center gap-6 py-6 text-sm font-black tracking-[0.15em] uppercase text-white z-10 shadow-2xl">
+                        <!-- Zamykamy menu po kliknięciu w link! -->
+                        <a href="/ramowka" onclick={() => isMenuOpen = false} class="hover:text-red-500 transition">RAMÓWKA</a>
+                        <a href="/artysci" onclick={() => isMenuOpen = false} class="hover:text-red-500 transition">ARTYŚCI</a>
+                        <a href="/studio" onclick={() => isMenuOpen = false} class="hover:text-red-500 transition">STUDIO</a>
+                        <a href="/kontakt" onclick={() => isMenuOpen = false} class="hover:text-red-500 transition">KONTAKT</a>
+                    </nav>
+                {/if}
                 <!-- eslint-enable svelte/no-navigation-without-resolve -->
                 
             </div>
@@ -229,12 +242,12 @@
 
     </div>
 
-    <!-- GŁÓWNA TREŚĆ STRONY (dodane id="glowna-tresc") -->
+    <!-- GŁÓWNA TREŚĆ STRONY -->
     <main id="glowna-tresc" class="grow w-full flex flex-col relative z-0 {$page.url.pathname === '/' ? '' : 'pt-28 md:pt-36'}">
         {@render children()}
     </main>
 
-    <!-- GLOBALNA STOPKA (FOOTER) -->
+    <!-- GLOBALNA STOPKA  -->
     <footer class="bg-black text-white w-full border-t border-zinc-800 py-10 mt-auto">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             

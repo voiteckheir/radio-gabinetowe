@@ -28,7 +28,7 @@
         const d = String(date.getDate()).padStart(2, '0');
         return `${y}-${m}-${d}`;
     }
-
+    // Funkcja określająca dziś i dni tygodnia do ramówki
     function generujDniTygodnia() {
         const dniNazwy = ['ND.', 'PN.', 'WT.', 'ŚR.', 'CZ.', 'PT.', 'SB.'];
         const dzisiaj = new Date();
@@ -145,7 +145,7 @@
         <h1 class="text-3xl md:text-5xl font-black uppercase tracking-wider mb-10 text-center">
             Ramówka
         </h1>
-
+        <!-- Domyślnie dzisiejszy dzień i przechodzenie po następnych/poprzednich-->
         <nav aria-label="Nawigacja po dniach tygodnia" class="flex overflow-x-auto gap-4 md:justify-center border-b border-zinc-800 pb-4 mb-10 no-scrollbar">
             {#each dniTygodnia as dzien (dzien.id)}
                 <button 
@@ -183,9 +183,9 @@
                     <div class="text-3xl md:text-4xl font-black text-red-500 w-24 shrink-0 drop-shadow-md">
                         {audycja.czas}
                     </div>
-                    
+                    <!--Okładka - jeśli jest -->
                     <div class="w-20 h-20 bg-zinc-800 border-2 border-black flex items-center justify-center shrink-0 shadow-inner group-hover:border-[#d31a38] transition-colors relative overflow-hidden" aria-hidden="true">
-                        <!-- Wyświetlamy okładkę z Sanity lub ikonkę zastępczą -->
+                        
                         {#if audycja.obrazekUrl}
                             <img src={audycja.obrazekUrl} alt="" class="w-full h-full object-cover" />
                         {:else}

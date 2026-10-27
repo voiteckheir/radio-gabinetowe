@@ -1,5 +1,4 @@
 <script lang="ts">
-    // Importujemy 'page' store, żeby Svelte przekazało nam numer i opis błędu
     import { page } from '$app/stores';
 </script>
 
@@ -7,10 +6,10 @@
     <title>Błąd {$page.status} | Radio Gabinetowe</title>
 </svelte:head>
 
-<!-- Dodany role="alert", aby czytnik natychmiast zasygnalizował problem przy zmianie podstrony -->
+
 <div role="alert" class="min-h-[70vh] flex flex-col items-center justify-center bg-black text-white px-4 text-center py-20 w-full">
     
-    <!-- Złowieszczy numer błędu (zazwyczaj 404) z czerwonym gradientem -->
+    <!-- Numer błędu -->
     <h1 class="text-8xl md:text-[10rem] font-black text-transparent bg-clip-text bg-gradient-to-br from-[#d31a38] to-red-900 mb-2 drop-shadow-lg leading-none">
         {$page.status}
     </h1>

@@ -1,10 +1,10 @@
 <script lang="ts">
     import Seo from '$lib/Seo.svelte';
     
-    let { data } = $props(); // Odbieramy dane z chmury!
+    let { data } = $props(); 
     let searchQuery = $state('');
     
-    // Svelte 5 dynamicznie filtruje dane z Sanity
+    
     let przefiltrowaniArtysci = $derived(
         (data.artysci || []).filter((artysta: any) => 
             artysta.nazwa.toLowerCase().includes(searchQuery.toLowerCase())
@@ -28,7 +28,7 @@
                 Artyści
             </h1>
             
-            <!-- Pasek wyszukiwania w stylu ze screena -->
+            <!-- Pasek wyszukiwania -->
             <div class="flex w-full md:w-80 shadow-lg">
                 <input 
                     type="text" 
@@ -46,21 +46,21 @@
             
         </div>
 
-        <!-- Cienka, biała linia oddzielająca -->
+        <!-- linia oddzielająca -->
         <div class="h-px w-full bg-white/20 mb-10"></div>
 
         <!-- SIATKA ARTYSTÓW -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
             {#each przefiltrowaniArtysci as artysta (artysta._id)}
                 
-                <!-- Karta Artysty (Klikalna - prowadzi do dynamicznej podstrony) -->
+                <!-- Karta Artysty -->
                 <a 
                     href="/artysci/{artysta.slug}" 
                     class="block bg-[#d31a38] p-3 transition-transform duration-300 hover:scale-105 hover:shadow-2xl group"
                 >
-                    <!-- Zewnętrzna ramka/odstęp zrobiona paddingiem czerwonego tła -->
                     
-                    <!-- Kontener na zdjęcie -->
+                    
+                    <!-- Zdjęcie -->
                     <div class="w-full aspect-square bg-zinc-900 border-2 border-black flex items-center justify-center relative overflow-hidden">
                         {#if artysta.zdjecieUrl}
                             <img src={artysta.zdjecieUrl} alt={artysta.nazwa} class="w-full h-full object-cover" />
